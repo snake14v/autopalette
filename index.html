@@ -106,15 +106,15 @@
   <a href="#home" class="logo">
     <img src="/logo.png" alt="Auto Palette" class="logo-img"/>
   </a>
-  <div class="nav-links">
-    <a href="#about" class="nav-link">About</a>
-    <a href="#services" class="nav-link">Services</a>
-    <a href="#gallery" class="nav-link">Gallery</a>
-    <a href="#reviews" class="nav-link">Reviews</a>
-    <a href="#contact" class="nav-link">Contact</a>
-    <button class="nav-link nav-cta" onclick="openWaModal()">BOOK NOW</button>
+  <div class="nav-links" id="nav-links">
+    <a href="#about" class="nav-link" onclick="closeMenu()">About</a>
+    <a href="#services" class="nav-link" onclick="closeMenu()">Services</a>
+    <a href="#gallery" class="nav-link" onclick="closeMenu()">Gallery</a>
+    <a href="#reviews" class="nav-link" onclick="closeMenu()">Reviews</a>
+    <a href="#contact" class="nav-link" onclick="closeMenu()">Contact</a>
+    <button class="nav-link nav-cta" onclick="openWaModal(); closeMenu();">BOOK NOW</button>
   </div>
-  <div class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+  <div class="hamburger" id="hamburger" onclick="toggleMenu()">
     <span></span><span></span><span></span>
   </div>
 </nav>
@@ -547,6 +547,16 @@ document.addEventListener('submit', function(e) {
     setTimeout(() => { btn.textContent = 'SEND VIA WHATSAPP'; btn.style.background = ''; }, 3000);
   }
 });
+
+// Mobile Menu
+function toggleMenu() {
+  document.getElementById('nav-links').classList.toggle('open');
+  document.getElementById('hamburger').classList.toggle('open');
+}
+function closeMenu() {
+  document.getElementById('nav-links').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+}
 
 // Particles
 (function(){

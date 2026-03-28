@@ -1600,3 +1600,76 @@ select.form-control {
   filter: brightness(1.1);
   margin-bottom: 1rem;
 }
+
+/* ============================================================
+   MOBILE OPTIMIZATION (Media Queries)
+   ============================================================ */
+@media (max-width: 1024px) {
+  .hero-title { font-size: 5rem; }
+  .about-grid, .services-grid { gap: 3rem; }
+}
+
+@media (max-width: 768px) {
+  /* Ticker */
+  .top-ticker { height: 30px; font-size: 0.6rem; }
+  .navbar { top: 30px; padding: 1rem 1.5rem; }
+  .navbar.scrolled { padding: 0.6rem 1.5rem; }
+
+  /* Logo */
+  .logo-img { height: 45px; }
+  .navbar.scrolled .logo-img { height: 35px; }
+
+  /* Navigation Mobile Menu */
+  .hamburger { display: flex; }
+  .nav-links {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 80%;
+    height: 100vh;
+    background: var(--bg-card);
+    flex-direction: column;
+    justify-content: center;
+    gap: 3rem;
+    padding: 2rem;
+    transition: 0.5s var(--ease-out);
+    box-shadow: -10px 0 50px rgba(0,0,0,0.9);
+    z-index: 1000;
+  }
+  .nav-links.open { right: 0; }
+  .nav-link { font-size: 1rem; letter-spacing: 4px; }
+  
+  /* Hamburger Anim */
+  .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* Hero */
+  .hero-title { font-size: 3.5rem; }
+  .hero-subtitle { font-size: 1rem; }
+  .hero-cta-group { flex-direction: column; width: 100%; }
+  .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+
+  /* Grids */
+  .about-grid, .services-grid, .process-grid, .contact-grid, .locations-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  
+  .about-image-wrapper img { height: 350px; }
+  .about-title, .section-heading { font-size: 2.8rem; }
+  .offer-title { font-size: 4rem; }
+  .offer-title .big-num { font-size: 7rem; }
+  
+  /* WhatsApp Modal */
+  .wa-modal { width: 95%; padding: 1rem; }
+  .wa-modal-header h3 { font-size: 1.5rem; }
+  .wa-chip { padding: 0.5rem 0.8rem; font-size: 0.6rem; }
+}
+
+@media (max-width: 480px) {
+  .hero-title { font-size: 2.8rem; }
+  .gate-counter { font-size: 2.5rem; }
+  .gate-logo { width: 140px; }
+}
+
