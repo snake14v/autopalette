@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AutoPalette | The Underground Detailing Vault</title>
+    <meta name="description" content="AutoPalette offers expert paint correction, paint protection films (PPF), ceramic coating, and bespoke auto detailing services." />
+    <link rel="stylesheet" href="/style.css" />
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <!-- Speakeasy Entrance / Age Gate Equivalent -->
+    <div id="entrance-gate" class="gate-overlay">
+      <div class="gate-content">
+        <h1 class="font-serif gate-title">Are you ready to elevate your ride?</h1>
+        <p class="gate-subtitle">Enter the vault.</p>
+        <button id="btn-enter" class="btn btn-gold">Knock Thrice to Enter</button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="main-content" class="hidden">
+      <!-- Navigation -->
+      <nav class="navbar">
+        <div class="logo">
+          <!-- User will add their logo later via tools in admin dashboard -->
+          <span class="font-serif">Auto</span><span class="font-sans font-light">Palette</span>
+        </div>
+        <div class="nav-links">
+          <a href="#about" class="nav-link">About</a>
+          <a href="#services" class="nav-link">Service Vault</a>
+          <a href="#collab" class="nav-link">Consultation</a>
+          <!-- Link to future admin login -->
+          <a href="/admin/login" class="nav-link nav-btn">Access Panel</a>
+        </div>
+      </nav>
+
+      <!-- Hero Section -->
+      <section class="hero" id="home">
+        <div class="hero-bg" style="background-image: url('/hero_bg.png');"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <h2 class="hero-title font-serif">Impeccable. Dark.<br/>Exquisite Finish.</h2>
+          <p class="hero-desc">The underground sanctuary for automotive perfection.</p>
+          <a href="#services" class="btn btn-outline">Explore the Vault</a>
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section class="about section-padding" id="about">
+        <div class="container">
+          <div class="about-grid">
+            <div class="about-text">
+              <h3 class="section-title font-serif">A Hidden World of Perfection</h3>
+              <p>Inspired by the elite, AutoPalette is an ode to the colorful world that bursts behind quiet doors. Your vehicle is not just a machine; it is a canvas waiting for a master's touch.</p>
+              <br/>
+              <p>We provide expert paint correction, paint protection and detailing services to enhance your car’s appearance and protect its finish with precision and uncompromised attention to detail.</p>
+            </div>
+            <div class="about-stats mt-4">
+              <div class="stat-item">
+                <span class="stat-num font-serif">10+</span>
+                <span class="stat-label">Years Perfecting</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-num font-serif">Dark</span>
+                <span class="stat-label">Speakeasy Vibe</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Services Section (from Brotomotiv functionality) -->
+      <section class="services section-padding bg-darker" id="services">
+        <div class="container">
+          <h3 class="section-title text-center font-serif mb-5">Our Secret Menu</h3>
+          <div class="services-grid">
+            
+            <div class="service-card">
+              <div class="service-img-wrapper">
+                <img src="/ppf_service.png" alt="Paint Protection Film" class="service-img">
+              </div>
+              <div class="service-info">
+                <h4 class="font-serif">Paint Protection Film</h4>
+                <p>Invisible armor for your luxury vehicle against scratches, chips, and the elements.</p>
+              </div>
+            </div>
+
+            <div class="service-card">
+              <div class="service-img-wrapper">
+                <div class="placeholder-img bg-graphite"></div>
+              </div>
+              <div class="service-info">
+                <h4 class="font-serif">Ceramic & Graphene Coating</h4>
+                <p>Luxuriously smooth hydrophobic protection providing years of brilliant shine.</p>
+              </div>
+            </div>
+
+            <div class="service-card">
+              <div class="service-img-wrapper">
+                <div class="placeholder-img bg-graphite"></div>
+              </div>
+              <div class="service-info">
+                <h4 class="font-serif">Panel & Full Body Painting</h4>
+                <p>Flawless color matching and bespoke custom color changes that turn heads.</p>
+              </div>
+            </div>
+
+            <div class="service-card">
+              <div class="service-img-wrapper">
+                <div class="placeholder-img bg-graphite"></div>
+              </div>
+              <div class="service-info">
+                <h4 class="font-serif">Sound Damping</h4>
+                <p>Isolate your cabin from the outside world. Silence meets performance.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact / Collab Section -->
+      <section class="contact section-padding" id="collab">
+        <div class="container">
+          <div class="contact-wrapper">
+            <h3 class="section-title font-serif">Seek an Audience</h3>
+            <p class="mb-4">Schedule a private consultation for your vehicle.</p>
+            
+            <form class="contact-form" id="contact-form">
+              <div class="form-group">
+                <input type="text" placeholder="Your Alias (Name)" required class="form-control">
+              </div>
+              <div class="form-group">
+                <input type="tel" placeholder="Contact Number" required class="form-control">
+              </div>
+              <div class="form-group">
+                <select class="form-control" required>
+                  <option value="" disabled selected>Select Service of Interest</option>
+                  <option value="ppf">Paint Protection Film</option>
+                  <option value="ceramic">Ceramic Coating</option>
+                  <option value="painting">Body Painting</option>
+                  <option value="damping">Sound Damping</option>
+                  <option value="other">Other / Custom</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-gold w-100">Transmit Request</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer bg-darker">
+        <div class="container">
+          <div class="footer-grid">
+            <div class="footer-brand">
+              <h2 class="font-serif">AutoPalette</h2>
+              <p class="text-sm">Bottled in secret by The Hush-Hush Hotline</p>
+              <p class="mt-2"><a href="tel:+918000000000" class="hover-gold">+91 80-XXXX-XXXX</a></p>
+              <p><a href="mailto:vaishakrn@xgo3d.com" class="hover-gold">vaishakrn@xgo3d.com</a></p>
+            </div>
+            <div class="footer-links">
+              <h4>Quick Links</h4>
+              <a href="#home">Entrance</a>
+              <a href="#about">The Vault</a>
+              <a href="#services">Menu</a>
+              <a href="#collab">Consult</a>
+            </div>
+            <div class="footer-social">
+              <h4>Follow the Shadows</h4>
+              <a href="#">Instagram</a>
+              <a href="#">YouTube</a>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p>&copy; 2026 AutoPalette. All Rights Reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
