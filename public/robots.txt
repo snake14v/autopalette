@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+
+Sitemap: https://autopalette.vercel.app/sitemap.xml
+
+# Auto Palette — Premium Auto Detailing, JP Nagar, Bengaluru
+# https://autopalette.vercel.app
