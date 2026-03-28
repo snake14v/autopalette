@@ -1,188 +1,393 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AutoPalette | The Underground Detailing Vault</title>
-    <meta name="description" content="AutoPalette offers expert paint correction, paint protection films (PPF), ceramic coating, and bespoke auto detailing services." />
-    <link rel="stylesheet" href="/style.css" />
-    <!-- Google Fonts for premium typography -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <!-- Speakeasy Entrance / Age Gate Equivalent -->
-    <div id="entrance-gate" class="gate-overlay">
-      <div class="gate-content">
-        <h1 class="font-serif gate-title">Are you ready to elevate your ride?</h1>
-        <p class="gate-subtitle">Enter the vault.</p>
-        <button id="btn-enter" class="btn btn-gold">Knock Thrice to Enter</button>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Auto Palette | The Underground Detailing Vault — Bengaluru</title>
+  <meta name="description" content="Auto Palette — We don't detail, we perfect. Premium PPF, Ceramic Coating, Body Shop, Modifications & Detailing in JP Nagar, Bengaluru."/>
+  <link rel="icon" href="/logo.png" type="image/png"/>
+  <link rel="stylesheet" href="/style.css"/>
+</head>
+<body>
+<!-- NOISE OVERLAY -->
+<div class="noise-overlay"></div>
+
+<!-- FLOATING PARTICLES -->
+<div class="particles" id="particles"></div>
+
+<!-- ============ ENTRANCE GATE ============ -->
+<div id="entrance-gate">
+  <div class="speed-lines">
+    <div class="speed-line" style="top:15%;width:300px;animation-delay:0s;"></div>
+    <div class="speed-line" style="top:35%;width:450px;animation-delay:0.8s;"></div>
+    <div class="speed-line" style="top:55%;width:200px;animation-delay:1.5s;"></div>
+    <div class="speed-line" style="top:75%;width:380px;animation-delay:0.4s;"></div>
+    <div class="speed-line" style="top:90%;width:280px;animation-delay:2s;"></div>
+  </div>
+  <div class="tacho-wrapper">
+    <svg class="tacho-svg" viewBox="0 0 300 300">
+      <circle cx="150" cy="150" r="140" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+      <circle cx="150" cy="150" r="130" fill="none" stroke="#333" stroke-width="1"/>
+      <!-- Tick marks -->
+      <g stroke="#555" stroke-width="1">
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(-135 150 150)"/>
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(-108 150 150)"/>
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(-81 150 150)"/>
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(-54 150 150)"/>
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(-27 150 150)"/>
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(0 150 150)"/>
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(27 150 150)"/>
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(54 150 150)"/>
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(81 150 150)"/>
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(108 150 150)"/>
+        <line x1="150" y1="25" x2="150" y2="40" transform="rotate(135 150 150)"/>
+      </g>
+      <!-- Red zone -->
+      <path d="M 150 150 L 245 50" stroke="#ff1a1a" stroke-width="2" opacity="0.3" transform="rotate(20 150 150)"/>
+      <path d="M 150 150 L 245 50" stroke="#ff1a1a" stroke-width="2" opacity="0.3" transform="rotate(35 150 150)"/>
+      <!-- Needle -->
+      <line id="tacho-needle" x1="150" y1="150" x2="150" y2="35" stroke="#c5a44e" stroke-width="3" stroke-linecap="round" transform="rotate(-135 150 150)"/>
+      <circle cx="150" cy="150" r="8" fill="#c5a44e" class="tacho-glow"/>
+      <!-- Center logo text -->
+      <text x="150" y="200" text-anchor="middle" fill="#555" font-family="Orbitron,sans-serif" font-size="10" letter-spacing="3">AUTO PALETTE</text>
+    </svg>
+  </div>
+  <div class="gate-counter">
+    <span id="gate-counter-num">0</span>
+    <span class="gate-counter-unit">% LOADED</span>
+  </div>
+  <p class="gate-tagline">WE DON'T DETAIL. WE PERFECT.</p>
+  <button id="btn-enter">ENTER THE VAULT</button>
+</div>
+
+<!-- ============ MAIN CONTENT ============ -->
+<main id="main-content" style="display:none;">
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="#home" class="logo">
+    <img src="/logo.png" alt="Auto Palette" class="logo-svg" onerror="this.style.display='none'"/>
+    <span class="logo-text"><span class="text-gold">AUTO</span> PALETTE</span>
+  </a>
+  <div class="nav-links">
+    <a href="#about" class="nav-link">About</a>
+    <a href="#services" class="nav-link">Services</a>
+    <a href="#gallery" class="nav-link">Gallery</a>
+    <a href="#reviews" class="nav-link">Reviews</a>
+    <a href="#contact" class="nav-link">Contact</a>
+    <a href="https://wa.me/918884471117?text=Hi%20Auto%20Palette!%20I'd%20like%20to%20book%20a%20consultation." class="nav-link nav-cta" target="_blank">BOOK NOW</a>
+  </div>
+  <div class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-bg" style="background-image:url('/hero_illustration.png');"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-speed-lines">
+    <div class="h-line" style="top:20%;width:400px;left:-400px;--duration:4s;--delay:0s;"></div>
+    <div class="h-line" style="top:40%;width:600px;left:-600px;--duration:3s;--delay:1s;"></div>
+    <div class="h-line" style="top:60%;width:350px;left:-350px;--duration:5s;--delay:0.5s;"></div>
+    <div class="h-line" style="top:80%;width:500px;left:-500px;--duration:3.5s;--delay:2s;"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-badge reveal"><span class="line"></span>ESTD 2022 · JP NAGAR, BENGALURU<span class="line"></span></div>
+    <h1 class="hero-title reveal delay-1">WE DON'T DETAIL<br/><span class="outline-text">WE PERFECT</span></h1>
+    <p class="hero-subtitle reveal delay-2">"The underground sanctuary for automotive perfection."</p>
+    <div class="hero-cta-group reveal delay-3">
+      <a href="https://wa.me/918884471117?text=Hi!%20I'd%20like%20to%20book%20a%20consultation%20at%20Auto%20Palette." class="btn-primary" target="_blank">BOOK CONSULTATION</a>
+      <a href="#services" class="btn-secondary">EXPLORE SERVICES</a>
+    </div>
+  </div>
+  <div class="scroll-indicator"><span>SCROLL</span><div class="arrow"></div></div>
+</section>
+
+<!-- SECTION DIVIDER -->
+<div class="section-divider"><svg viewBox="0 0 1440 80" preserveAspectRatio="none"><polygon fill="#0f0f0f" points="0,80 1440,80 1440,40 720,0 0,40"/></svg></div>
+
+<!-- ABOUT -->
+<section class="about" id="about">
+  <div class="container">
+    <!-- Corner decorations -->
+    <svg class="corner-decor top-left" viewBox="0 0 80 80"><line x1="0" y1="0" x2="40" y2="0" stroke="#c5a44e" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="40" stroke="#c5a44e" stroke-width="1"/></svg>
+    <svg class="corner-decor top-right" viewBox="0 0 80 80"><line x1="0" y1="0" x2="40" y2="0" stroke="#c5a44e" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="40" stroke="#c5a44e" stroke-width="1"/></svg>
+    <div class="about-grid">
+      <div class="about-image-wrapper reveal-left">
+        <img src="/about_studio.png" alt="Auto Palette Studio with hexagonal lights"/>
+        <div class="about-image-frame"></div>
+      </div>
+      <div class="reveal-right">
+        <div class="about-label"><span class="dot"></span>THE VAULT</div>
+        <h2 class="about-title">A HIDDEN WORLD OF PERFECTION</h2>
+        <p class="about-desc">Auto Palette is the underground sanctuary where automotive art meets precision engineering. Born in JP Nagar, Bengaluru, our studio features signature hexagonal ceiling lights that create the perfect environment to achieve flawless finishes.</p>
+        <p class="about-desc">We don't just detail — we transform. Every vehicle that enters the vault receives uncompromised attention, from paint correction to ceramic coatings, using only premium products like WaveX Graphene Ceramic Coating.</p>
+        <div class="about-stats">
+          <div class="stat-box reveal delay-1"><span class="stat-num" data-count="500" data-suffix="+">0</span><span class="stat-label">Projects Done</span></div>
+          <div class="stat-box reveal delay-2"><span class="stat-num" data-count="5" data-suffix=".0★">0</span><span class="stat-label">Google Rating</span></div>
+          <div class="stat-box reveal delay-3"><span class="stat-num" data-count="3" data-suffix="+">0</span><span class="stat-label">Years Perfecting</span></div>
+        </div>
       </div>
     </div>
+  </div>
+</section>
 
-    <!-- Main Content -->
-    <main id="main-content" class="hidden">
-      <!-- Navigation -->
-      <nav class="navbar">
-        <div class="logo">
-          <!-- User will add their logo later via tools in admin dashboard -->
-          <span class="font-serif">Auto</span><span class="font-sans font-light">Palette</span>
+<!-- SERVICES -->
+<section class="services" id="services">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">◆ OUR SECRET MENU ◆</div>
+      <h2 class="section-heading">PREMIUM SERVICES</h2>
+      <p class="section-sub">Choose from our range of elite automotive protection and customization services.</p>
+    </div>
+    <div class="services-grid">
+      <div class="service-card reveal delay-1">
+        <div class="service-card-img"><img src="/ppf_service.png" alt="Paint Protection Film"/></div>
+        <div class="service-card-body">
+          <div class="service-card-num">01</div>
+          <h3 class="service-card-title">PAINT PROTECTION FILM</h3>
+          <p class="service-card-desc">Invisible armor using Ultra Nano Shield PPF against scratches, chips, and stone damage. Gloss & matte options available.</p>
+          <a href="https://wa.me/918884471117?text=Hi!%20I'm%20interested%20in%20PPF%20for%20my%20vehicle." class="service-card-link" target="_blank">ENQUIRE NOW <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         </div>
-        <div class="nav-links">
-          <a href="#about" class="nav-link">About</a>
-          <a href="#services" class="nav-link">Service Vault</a>
-          <a href="#collab" class="nav-link">Consultation</a>
-          <!-- Link to future admin login -->
-          <a href="/admin/login" class="nav-link nav-btn">Access Panel</a>
+      </div>
+      <div class="service-card reveal delay-2">
+        <div class="service-card-img"><img src="/ceramic_service.png" alt="Ceramic Coating"/></div>
+        <div class="service-card-body">
+          <div class="service-card-num">02</div>
+          <h3 class="service-card-title">CERAMIC & GRAPHENE COATING</h3>
+          <p class="service-card-desc">WaveX Graphene Ceramic Coating for years of hydrophobic protection and mirror-like brilliance.</p>
+          <a href="https://wa.me/918884471117?text=Hi!%20I'm%20interested%20in%20Ceramic%20Coating." class="service-card-link" target="_blank">ENQUIRE NOW <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         </div>
-      </nav>
-
-      <!-- Hero Section -->
-      <section class="hero" id="home">
-        <div class="hero-bg" style="background-image: url('/hero_bg.png');"></div>
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-          <h2 class="hero-title font-serif">Impeccable. Dark.<br/>Exquisite Finish.</h2>
-          <p class="hero-desc">The underground sanctuary for automotive perfection.</p>
-          <a href="#services" class="btn btn-outline">Explore the Vault</a>
+      </div>
+      <div class="service-card reveal delay-3">
+        <div class="service-card-img"><img src="/bodyshop_service.png" alt="Body Shop"/></div>
+        <div class="service-card-body">
+          <div class="service-card-num">03</div>
+          <h3 class="service-card-title">BODY SHOP & PAINTING</h3>
+          <p class="service-card-desc">Full body repaints, panel painting, dent repairs, and bespoke custom color changes that turn heads.</p>
+          <a href="https://wa.me/918884471117?text=Hi!%20I%20need%20body%20shop%20/%20painting%20work." class="service-card-link" target="_blank">ENQUIRE NOW <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         </div>
-      </section>
-
-      <!-- About Section -->
-      <section class="about section-padding" id="about">
-        <div class="container">
-          <div class="about-grid">
-            <div class="about-text">
-              <h3 class="section-title font-serif">A Hidden World of Perfection</h3>
-              <p>Inspired by the elite, AutoPalette is an ode to the colorful world that bursts behind quiet doors. Your vehicle is not just a machine; it is a canvas waiting for a master's touch.</p>
-              <br/>
-              <p>We provide expert paint correction, paint protection and detailing services to enhance your car’s appearance and protect its finish with precision and uncompromised attention to detail.</p>
-            </div>
-            <div class="about-stats mt-4">
-              <div class="stat-item">
-                <span class="stat-num font-serif">10+</span>
-                <span class="stat-label">Years Perfecting</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-num font-serif">Dark</span>
-                <span class="stat-label">Speakeasy Vibe</span>
-              </div>
-            </div>
-          </div>
+      </div>
+      <div class="service-card reveal delay-1">
+        <div class="service-card-img"><img src="/detailing_closeup.png" alt="Detailing"/></div>
+        <div class="service-card-body">
+          <div class="service-card-num">04</div>
+          <h3 class="service-card-title">PROFESSIONAL DETAILING</h3>
+          <p class="service-card-desc">Interior & exterior deep cleaning, paint correction, swirl removal. True perfectionist approach.</p>
+          <a href="https://wa.me/918884471117?text=Hi!%20I'm%20interested%20in%20Full%20Detailing." class="service-card-link" target="_blank">ENQUIRE NOW <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         </div>
-      </section>
-
-      <!-- Services Section (from Brotomotiv functionality) -->
-      <section class="services section-padding bg-darker" id="services">
-        <div class="container">
-          <h3 class="section-title text-center font-serif mb-5">Our Secret Menu</h3>
-          <div class="services-grid">
-            
-            <div class="service-card">
-              <div class="service-img-wrapper">
-                <img src="/ppf_service.png" alt="Paint Protection Film" class="service-img">
-              </div>
-              <div class="service-info">
-                <h4 class="font-serif">Paint Protection Film</h4>
-                <p>Invisible armor for your luxury vehicle against scratches, chips, and the elements.</p>
-              </div>
-            </div>
-
-            <div class="service-card">
-              <div class="service-img-wrapper">
-                <div class="placeholder-img bg-graphite"></div>
-              </div>
-              <div class="service-info">
-                <h4 class="font-serif">Ceramic & Graphene Coating</h4>
-                <p>Luxuriously smooth hydrophobic protection providing years of brilliant shine.</p>
-              </div>
-            </div>
-
-            <div class="service-card">
-              <div class="service-img-wrapper">
-                <div class="placeholder-img bg-graphite"></div>
-              </div>
-              <div class="service-info">
-                <h4 class="font-serif">Panel & Full Body Painting</h4>
-                <p>Flawless color matching and bespoke custom color changes that turn heads.</p>
-              </div>
-            </div>
-
-            <div class="service-card">
-              <div class="service-img-wrapper">
-                <div class="placeholder-img bg-graphite"></div>
-              </div>
-              <div class="service-info">
-                <h4 class="font-serif">Sound Damping</h4>
-                <p>Isolate your cabin from the outside world. Silence meets performance.</p>
-              </div>
-            </div>
-
-          </div>
+      </div>
+      <div class="service-card reveal delay-2">
+        <div class="service-card-img"><img src="/bike_mods.png" alt="Bike Modifications"/></div>
+        <div class="service-card-body">
+          <div class="service-card-num">05</div>
+          <h3 class="service-card-title">MODIFICATIONS & MODS</h3>
+          <p class="service-card-desc">Car & bike modifications — custom lighting, performance accessories, alloy wheels, and aesthetic upgrades.</p>
+          <a href="https://wa.me/918884471117?text=Hi!%20I'm%20interested%20in%20Modifications." class="service-card-link" target="_blank">ENQUIRE NOW <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         </div>
-      </section>
-
-      <!-- Contact / Collab Section -->
-      <section class="contact section-padding" id="collab">
-        <div class="container">
-          <div class="contact-wrapper">
-            <h3 class="section-title font-serif">Seek an Audience</h3>
-            <p class="mb-4">Schedule a private consultation for your vehicle.</p>
-            
-            <form class="contact-form" id="contact-form">
-              <div class="form-group">
-                <input type="text" placeholder="Your Alias (Name)" required class="form-control">
-              </div>
-              <div class="form-group">
-                <input type="tel" placeholder="Contact Number" required class="form-control">
-              </div>
-              <div class="form-group">
-                <select class="form-control" required>
-                  <option value="" disabled selected>Select Service of Interest</option>
-                  <option value="ppf">Paint Protection Film</option>
-                  <option value="ceramic">Ceramic Coating</option>
-                  <option value="painting">Body Painting</option>
-                  <option value="damping">Sound Damping</option>
-                  <option value="other">Other / Custom</option>
-                </select>
-              </div>
-              <button type="submit" class="btn btn-gold w-100">Transmit Request</button>
-            </form>
-          </div>
+      </div>
+      <div class="service-card reveal delay-3">
+        <div class="service-card-img"><img src="/accessories_service.png" alt="Accessories"/></div>
+        <div class="service-card-body">
+          <div class="service-card-num">06</div>
+          <h3 class="service-card-title">ACCESSORIES & UPGRADES</h3>
+          <p class="service-card-desc">Premium interior upgrades, ambient lighting, seat covers, and cabin enhancements for ultimate luxury.</p>
+          <a href="https://wa.me/918884471117?text=Hi!%20I'm%20interested%20in%20Accessories." class="service-card-link" target="_blank">ENQUIRE NOW <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+</section>
 
-      <!-- Footer -->
-      <footer class="footer bg-darker">
-        <div class="container">
-          <div class="footer-grid">
-            <div class="footer-brand">
-              <h2 class="font-serif">AutoPalette</h2>
-              <p class="text-sm">Bottled in secret by The Hush-Hush Hotline</p>
-              <p class="mt-2"><a href="tel:+918000000000" class="hover-gold">+91 80-XXXX-XXXX</a></p>
-              <p><a href="mailto:vaishakrn@xgo3d.com" class="hover-gold">vaishakrn@xgo3d.com</a></p>
-            </div>
-            <div class="footer-links">
-              <h4>Quick Links</h4>
-              <a href="#home">Entrance</a>
-              <a href="#about">The Vault</a>
-              <a href="#services">Menu</a>
-              <a href="#collab">Consult</a>
-            </div>
-            <div class="footer-social">
-              <h4>Follow the Shadows</h4>
-              <a href="#">Instagram</a>
-              <a href="#">YouTube</a>
-            </div>
-          </div>
-          <div class="footer-bottom">
-            <p>&copy; 2026 AutoPalette. All Rights Reserved.</p>
-          </div>
+<!-- OFFER BANNER -->
+<section class="offer-section">
+  <div class="offer-bg" style="background-image:url('/offer_banner.png');"></div>
+  <div class="container">
+    <div class="offer-content reveal-scale">
+      <div class="offer-badge">★ GRAND OPENING OFFER ★</div>
+      <div class="offer-title"><span class="big-num">50%</span>OFF</div>
+      <p class="offer-desc">Celebrate our launch with massive discounts on all PPF and Detailing services. Limited time only!</p>
+      <a href="https://wa.me/918884471117?text=Hi!%20I'd%20like%20to%20claim%20the%2050%25%20launch%20offer!" class="offer-cta" target="_blank">CLAIM OFFER ON WHATSAPP</a>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="process" id="process">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">◆ HOW IT WORKS ◆</div>
+      <h2 class="section-heading">THE CONSULTATION PROCESS</h2>
+    </div>
+    <div class="process-grid">
+      <div class="process-step reveal delay-1">
+        <div class="process-step-num">01</div>
+        <div class="process-step-icon"><svg viewBox="0 0 60 60" fill="none" stroke="#c5a44e" stroke-width="1.5"><rect x="10" y="15" width="40" height="30" rx="3"/><path d="M10 20l20 14 20-14"/></svg></div>
+        <h4>SHARE REQUIREMENTS</h4>
+        <p>Reach us via WhatsApp or the enquiry form. Tell us what your vehicle needs.</p>
+      </div>
+      <div class="process-step reveal delay-2">
+        <div class="process-step-num">02</div>
+        <div class="process-step-icon"><svg viewBox="0 0 60 60" fill="none" stroke="#c5a44e" stroke-width="1.5"><circle cx="30" cy="30" r="18"/><polyline points="30 18 30 30 40 30"/></svg></div>
+        <h4>SCHEDULE INSPECTION</h4>
+        <p>Bring your car in for a physical inspection or receive a detailed estimate via WhatsApp.</p>
+      </div>
+      <div class="process-step reveal delay-3">
+        <div class="process-step-num">03</div>
+        <div class="process-step-icon"><svg viewBox="0 0 60 60" fill="none" stroke="#c5a44e" stroke-width="1.5"><rect x="12" y="10" width="36" height="40" rx="3"/><line x1="20" y1="20" x2="40" y2="20"/><line x1="20" y1="28" x2="40" y2="28"/><line x1="20" y1="36" x2="32" y2="36"/></svg></div>
+        <h4>BOOK APPOINTMENT</h4>
+        <p>Confirm your slot and fix the latest available date. We work on appointments only.</p>
+      </div>
+      <div class="process-step reveal delay-4">
+        <div class="process-step-num">04</div>
+        <div class="process-step-icon"><svg viewBox="0 0 60 60" fill="none" stroke="#c5a44e" stroke-width="1.5"><path d="M10 40 C15 25, 25 15, 50 20"/><circle cx="50" cy="20" r="4" fill="#c5a44e"/><path d="M15 42l-5 8 8-5z" fill="#c5a44e"/></svg></div>
+        <h4>DRIVE IN FOR WORK</h4>
+        <p>Walk in with your vehicle and our expert team will handle the rest with precision.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="reviews" id="reviews">
+  <div class="container"><div class="section-header reveal"><div class="section-label">◆ 5.0 ★ ON GOOGLE ◆</div><h2 class="section-heading">CUSTOMER REVIEWS</h2></div></div>
+  <div class="reviews-track">
+    <div class="review-card"><div class="review-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg></div><p class="review-text">"Exceptional car detailing and paint services. The attention to detail is unmatched and the staff is incredibly professional. My car looks brand new!"</p><div class="review-author">VERIFIED CUSTOMER</div><div class="review-source">Google Reviews</div></div>
+    <div class="review-card"><div class="review-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg></div><p class="review-text">"Wonderful work on my BMW X5! The ceramic coating is flawless and the hexagonal studio gives off such premium vibes. Highly recommended!"</p><div class="review-author">BMW X5 OWNER</div><div class="review-source">Google Reviews</div></div>
+    <div class="review-card"><div class="review-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg></div><p class="review-text">"Got PPF done for my Safari. These guys really rock! The perfectionist approach is visible in every inch of the work. Zero complaints."</p><div class="review-author">TATA SAFARI OWNER</div><div class="review-source">Google Reviews</div></div>
+    <div class="review-card"><div class="review-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg></div><p class="review-text">"Did ceramic coating for my Honda City. The experience was truly premium. Professional staff and an environment that speaks quality."</p><div class="review-author">HONDA CITY OWNER</div><div class="review-source">Google Reviews</div></div>
+    <!-- Duplicated for infinite scroll -->
+    <div class="review-card"><div class="review-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg></div><p class="review-text">"Exceptional car detailing and paint services. The attention to detail is unmatched and the staff is incredibly professional."</p><div class="review-author">VERIFIED CUSTOMER</div><div class="review-source">Google Reviews</div></div>
+    <div class="review-card"><div class="review-stars"><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg><svg viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.5 5.8 21 7 14 2 9.3 9 8.5"/></svg></div><p class="review-text">"Wonderful work on my BMW X5! The ceramic coating is flawless and the studio is truly next level."</p><div class="review-author">BMW X5 OWNER</div><div class="review-source">Google Reviews</div></div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section class="gallery" id="gallery">
+  <div class="container"><div class="section-header reveal"><div class="section-label">◆ @AUTOPALETTE_ ◆</div><h2 class="section-heading">FROM THE VAULT</h2><p class="section-sub">Real work. Real results. Follow us on Instagram.</p></div></div>
+  <div class="gallery-grid">
+    <div class="gallery-item reveal-scale delay-1"><img src="/gallery_bmw.png" alt="BMW X5 Detailing"/><div class="gallery-item-overlay"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0z"/><path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8z"/><circle cx="18.406" cy="5.594" r="1.44"/></svg></div></div>
+    <div class="gallery-item reveal-scale delay-2"><img src="/gallery_honda.png" alt="Honda City"/><div class="gallery-item-overlay"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0z"/><path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8z"/></svg></div></div>
+    <div class="gallery-item reveal-scale delay-3"><img src="/gallery_verna.png" alt="Verna Detailing"/><div class="gallery-item-overlay"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0z"/><path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8z"/></svg></div></div>
+    <div class="gallery-item reveal-scale delay-4"><img src="/gallery_redcar.png" alt="Off-road Detailing"/><div class="gallery-item-overlay"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0z"/><path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8z"/></svg></div></div>
+  </div>
+  <div style="text-align:center;margin-top:3rem;" class="reveal">
+    <a href="https://www.instagram.com/autopalette_/" class="btn-primary" target="_blank" style="display:inline-block;">FOLLOW @AUTOPALETTE_</a>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="container">
+    <div class="contact-grid">
+      <div class="reveal-left">
+        <div class="contact-info-label"><span class="dot"></span> GET IN TOUCH</div>
+        <h2 class="contact-info-title">SEEK AN AUDIENCE</h2>
+        <p class="contact-info-desc">Schedule a private consultation for your vehicle. Walk-ins welcome, but appointments ensure our full, undivided attention to your ride.</p>
+        <div class="contact-details">
+          <div class="contact-detail-item"><svg viewBox="0 0 24 24" fill="none" stroke="#c5a44e" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg><div><div class="c-label">Call Us</div><a href="tel:+919900012090" class="c-value">+91 9900012090</a> / <a href="tel:+918884471117" class="c-value">+91 8884471117</a></div></div>
+          <div class="contact-detail-item"><svg viewBox="0 0 24 24" fill="none" stroke="#c5a44e" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><div><div class="c-label">Detailing Studio</div><div class="c-value">116, Outer Ring Rd, JP Nagar 1st Phase, Bengaluru 560078</div></div></div>
+          <div class="contact-detail-item"><svg viewBox="0 0 24 24" fill="none" stroke="#c5a44e" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><div><div class="c-label">Body Shop</div><div class="c-value">Royal Park Residency Layout 1, JP Nagar 9th Phase, Bengaluru 560108</div></div></div>
+          <div class="contact-detail-item"><svg viewBox="0 0 24 24" fill="none" stroke="#c5a44e" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div><div class="c-label">Hours</div><div class="c-value">9:00 AM – 10:00 PM Daily</div></div></div>
         </div>
-      </footer>
-    </main>
+      </div>
+      <form class="contact-form reveal-right" id="enquiry-form">
+        <div class="form-title">SERVICE ENQUIRY</div>
+        <div class="form-row"><input type="text" class="form-control" placeholder="Your Name" id="fname" required/><input type="tel" class="form-control" placeholder="Phone Number" id="fphone" required/></div>
+        <div class="form-group"><select class="form-control" id="fservice" required><option value="" disabled selected>Select Service</option><option value="PPF">Paint Protection Film</option><option value="Ceramic Coating">Ceramic & Graphene Coating</option><option value="Body Shop">Body Shop / Painting</option><option value="Detailing">Professional Detailing</option><option value="Modifications">Modifications</option><option value="Accessories">Accessories</option><option value="Other">Other</option></select></div>
+        <div class="form-group"><input type="text" class="form-control" placeholder="Vehicle (e.g. BMW X5 2024)" id="fvehicle"/></div>
+        <div class="form-group"><textarea class="form-control" placeholder="Additional notes..." id="fnotes"></textarea></div>
+        <button type="submit" class="btn-submit">SEND VIA WHATSAPP</button>
+      </form>
+    </div>
+  </div>
+</section>
 
-    <script type="module" src="/main.js"></script>
-  </body>
+<!-- LOCATIONS -->
+<section class="locations">
+  <div class="container">
+    <div class="section-header reveal"><div class="section-label">◆ FIND US ◆</div><h2 class="section-heading">OUR LOCATIONS</h2></div>
+    <div class="locations-grid">
+      <div class="location-card reveal-left">
+        <div class="location-icon"><svg viewBox="0 0 50 50" fill="none" stroke="#c5a44e" stroke-width="1.5"><path d="M25 5C17 5 10 12 10 20c0 10 15 25 15 25s15-15 15-25c0-8-7-15-15-15z"/><circle cx="25" cy="20" r="6"/></svg></div>
+        <div><h4>DETAILING STUDIO</h4><p>116, Outer Ring Rd, JP Nagar 1st Phase, Bengaluru, Karnataka 560078</p><div class="hours">Open 9 AM – 10 PM</div></div>
+      </div>
+      <div class="location-card reveal-right">
+        <div class="location-icon"><svg viewBox="0 0 50 50" fill="none" stroke="#c5a44e" stroke-width="1.5"><path d="M25 5C17 5 10 12 10 20c0 10 15 25 15 25s15-15 15-25c0-8-7-15-15-15z"/><circle cx="25" cy="20" r="6"/></svg></div>
+        <div><h4>BODY SHOP</h4><p>Royal Park Residency Layout 1, JP Nagar 9th Phase, Bengaluru, Karnataka 560108</p><div class="hours">Open 9 AM – 10 PM</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo"><img src="/logo.png" alt="Auto Palette" class="logo-svg" onerror="this.style.display='none'"/><span class="logo-text"><span class="text-gold">AUTO</span> PALETTE</span></div>
+        <p class="footer-brand-tagline">"We don't detail. We perfect."</p>
+        <p style="color:#888;font-size:.85rem;">ESTD 2022 · JP Nagar, Bengaluru</p>
+        <div class="footer-social">
+          <a href="https://www.instagram.com/autopalette_/" target="_blank" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0z"/><path d="M12 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8z"/><circle cx="18.406" cy="5.594" r="1.44"/></svg></a>
+          <a href="https://wa.me/918884471117" target="_blank" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492l4.574-1.47A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.82c-2.169 0-4.18-.685-5.826-1.85l-.418-.248-2.714.872.888-2.64-.273-.434A9.78 9.78 0 012.18 12c0-5.424 4.396-9.82 9.82-9.82 5.424 0 9.82 4.396 9.82 9.82 0 5.424-4.396 9.82-9.82 9.82z"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-col"><h4>SERVICES</h4><a href="#services">Paint Protection Film</a><a href="#services">Ceramic Coating</a><a href="#services">Body Shop</a><a href="#services">Detailing</a><a href="#services">Modifications</a><a href="#services">Accessories</a></div>
+      <div class="footer-col"><h4>QUICK LINKS</h4><a href="#home">Home</a><a href="#about">About</a><a href="#gallery">Gallery</a><a href="#reviews">Reviews</a><a href="#contact">Contact</a></div>
+      <div class="footer-col"><h4>CONTACT</h4><a href="tel:+919900012090">+91 9900012090</a><a href="tel:+918884471117">+91 8884471117</a><a href="https://wa.me/918884471117" target="_blank">WhatsApp Us</a><a href="https://www.instagram.com/autopalette_/" target="_blank">@autopalette_</a></div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Auto Palette. All Rights Reserved.</p>
+      <p>Designed with precision.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- FLOATING WHATSAPP BUTTON -->
+<a href="https://wa.me/918884471117?text=Hi%20Auto%20Palette!%20I'd%20like%20to%20enquire%20about%20your%20services." target="_blank" style="position:fixed;bottom:2rem;right:2rem;width:60px;height:60px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:999;transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+  <svg width="30" height="30" fill="#fff" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492l4.574-1.47A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.82c-2.169 0-4.18-.685-5.826-1.85l-.418-.248-2.714.872.888-2.64-.273-.434A9.78 9.78 0 012.18 12c0-5.424 4.396-9.82 9.82-9.82 5.424 0 9.82 4.396 9.82 9.82 0 5.424-4.396 9.82-9.82 9.82z"/></svg>
+</a>
+
+</main>
+
+<script type="module" src="/main.js"></script>
+<!-- WhatsApp form redirect -->
+<script>
+document.addEventListener('submit', function(e) {
+  if (e.target.id === 'enquiry-form') {
+    e.preventDefault();
+    const name = document.getElementById('fname').value;
+    const phone = document.getElementById('fphone').value;
+    const service = document.getElementById('fservice').value;
+    const vehicle = document.getElementById('fvehicle').value;
+    const notes = document.getElementById('fnotes').value;
+    const msg = encodeURIComponent(
+      `🚗 *New Enquiry from AutoPalette Website*\n\n` +
+      `*Name:* ${name}\n*Phone:* ${phone}\n*Service:* ${service}\n` +
+      `*Vehicle:* ${vehicle || 'Not specified'}\n*Notes:* ${notes || 'None'}`
+    );
+    window.open('https://wa.me/918884471117?text=' + msg, '_blank');
+    const btn = e.target.querySelector('.btn-submit');
+    btn.textContent = '✓ SENT TO WHATSAPP';
+    btn.style.background = '#25d366';
+    e.target.reset();
+    setTimeout(() => { btn.textContent = 'SEND VIA WHATSAPP'; btn.style.background = ''; }, 3000);
+  }
+});
+</script>
+<!-- Particle generator -->
+<script>
+(function(){
+  const c = document.getElementById('particles');
+  for(let i=0;i<30;i++){
+    const p = document.createElement('div');
+    p.className='particle';
+    p.style.cssText=`left:${Math.random()*100}%;--dur:${8+Math.random()*12}s;--delay:${Math.random()*10}s;--drift:${(Math.random()-0.5)*100}px;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;`;
+    c.appendChild(p);
+  }
+})();
+</script>
+</body>
 </html>
