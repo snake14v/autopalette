@@ -24,6 +24,7 @@
     <div class="speed-line" style="top:75%;width:380px;animation-delay:0.4s;"></div>
     <div class="speed-line" style="top:90%;width:280px;animation-delay:2s;"></div>
   </div>
+  <img src="/logo.png" alt="Auto Palette" class="gate-logo" id="gate-logo"/>
   <div class="tacho-wrapper">
     <svg class="tacho-svg" viewBox="0 0 300 300">
       <circle cx="150" cy="150" r="140" fill="none" stroke="#1a1a1a" stroke-width="2"/>
@@ -66,8 +67,7 @@
 <!-- NAVBAR -->
 <nav class="navbar">
   <a href="#home" class="logo">
-    <img src="/logo.png" alt="Auto Palette" class="logo-svg" onerror="this.style.display='none'"/>
-    <span class="logo-text"><span class="text-gold">AUTO</span> PALETTE</span>
+    <img src="/logo.png" alt="Auto Palette" class="logo-img"/>
   </a>
   <div class="nav-links">
     <a href="#about" class="nav-link">About</a>
@@ -75,7 +75,7 @@
     <a href="#gallery" class="nav-link">Gallery</a>
     <a href="#reviews" class="nav-link">Reviews</a>
     <a href="#contact" class="nav-link">Contact</a>
-    <a href="https://wa.me/918884471117?text=Hi%20Auto%20Palette!%20I'd%20like%20to%20book%20a%20consultation." class="nav-link nav-cta" target="_blank">BOOK NOW</a>
+    <button class="nav-link nav-cta" onclick="openWaModal()">BOOK NOW</button>
   </div>
   <div class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')">
     <span></span><span></span><span></span>
@@ -97,7 +97,7 @@
     <h1 class="hero-title reveal delay-1">WE DON'T DETAIL<br/><span class="outline-text">WE PERFECT</span></h1>
     <p class="hero-subtitle reveal delay-2">"The underground sanctuary for automotive perfection."</p>
     <div class="hero-cta-group reveal delay-3">
-      <a href="https://wa.me/918884471117?text=Hi!%20I'd%20like%20to%20book%20a%20consultation%20at%20Auto%20Palette." class="btn-primary" target="_blank">BOOK CONSULTATION</a>
+      <button class="btn-primary" onclick="openWaModal()">BOOK CONSULTATION</button>
       <a href="#services" class="btn-secondary">EXPLORE SERVICES</a>
     </div>
   </div>
@@ -326,7 +326,7 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <div class="logo"><img src="/logo.png" alt="Auto Palette" class="logo-svg" onerror="this.style.display='none'"/><span class="logo-text"><span class="text-gold">AUTO</span> PALETTE</span></div>
+        <img src="/logo.png" alt="Auto Palette" class="footer-logo-img"/>
         <p class="footer-brand-tagline">"We don't detail. We perfect."</p>
         <p style="color:#888;font-size:.85rem;">ESTD 2022 · JP Nagar, Bengaluru</p>
         <div class="footer-social">
@@ -346,15 +346,124 @@
 </footer>
 
 <!-- FLOATING WHATSAPP BUTTON -->
-<a href="https://wa.me/918884471117?text=Hi%20Auto%20Palette!%20I'd%20like%20to%20enquire%20about%20your%20services." target="_blank" style="position:fixed;bottom:2rem;right:2rem;width:60px;height:60px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:999;transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+<a href="javascript:void(0)" onclick="openWaModal()" style="position:fixed;bottom:2rem;right:2rem;width:60px;height:60px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:999;transition:transform 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
   <svg width="30" height="30" fill="#fff" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492l4.574-1.47A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.82c-2.169 0-4.18-.685-5.826-1.85l-.418-.248-2.714.872.888-2.64-.273-.434A9.78 9.78 0 012.18 12c0-5.424 4.396-9.82 9.82-9.82 5.424 0 9.82 4.396 9.82 9.82 0 5.424-4.396 9.82-9.82 9.82z"/></svg>
 </a>
+
+<!-- WHATSAPP SERVICE BUILDER MODAL -->
+<div class="wa-modal-overlay" id="wa-modal">
+  <div class="wa-modal">
+    <button class="wa-modal-close" onclick="closeWaModal()">&times;</button>
+    <div class="wa-modal-header">
+      <h3>SERVICE ENQUIRY</h3>
+      <p>Build your request in 3 easy steps</p>
+    </div>
+    <div class="wa-modal-body">
+      <div class="wa-steps"><div class="wa-step-dot active" id="ws1"></div><div class="wa-step-dot" id="ws2"></div><div class="wa-step-dot" id="ws3"></div></div>
+      <!-- Step 1: Select Services -->
+      <div class="wa-panel active" id="wp1">
+        <h4>SELECT SERVICES</h4>
+        <p style="color:#888;font-size:.85rem;margin-bottom:1rem;">Select one or more services you need:</p>
+        <div class="wa-service-chips">
+          <button class="wa-chip" data-svc="Paint Protection Film (PPF)">PPF</button>
+          <button class="wa-chip" data-svc="Ceramic & Graphene Coating">CERAMIC COATING</button>
+          <button class="wa-chip" data-svc="Body Shop / Painting">BODY SHOP</button>
+          <button class="wa-chip" data-svc="Professional Detailing">DETAILING</button>
+          <button class="wa-chip" data-svc="Modifications">MODIFICATIONS</button>
+          <button class="wa-chip" data-svc="Accessories & Upgrades">ACCESSORIES</button>
+          <button class="wa-chip" data-svc="Paint Correction">PAINT CORRECTION</button>
+          <button class="wa-chip" data-svc="Bike Detailing">BIKE DETAILING</button>
+          <button class="wa-chip" data-svc="Interior Restoration">INTERIOR</button>
+          <button class="wa-chip" data-svc="Custom Color Change">COLOR CHANGE</button>
+        </div>
+        <div class="wa-nav"><div></div><button class="wa-nav-btn wa-nav-next" onclick="waStep(2)">NEXT &rarr;</button></div>
+      </div>
+      <!-- Step 2: Vehicle & Details -->
+      <div class="wa-panel" id="wp2">
+        <h4>YOUR DETAILS</h4>
+        <div class="form-group"><input type="text" class="form-control" placeholder="Your Name" id="wa-name"/></div>
+        <div class="form-group"><input type="tel" class="form-control" placeholder="Phone Number" id="wa-phone"/></div>
+        <div class="form-group"><input type="text" class="form-control" placeholder="Vehicle (e.g. BMW X5 2024)" id="wa-vehicle"/></div>
+        <div class="form-group"><textarea class="form-control" placeholder="Any specific requirements or notes..." id="wa-notes" rows="3"></textarea></div>
+        <div class="wa-nav"><button class="wa-nav-btn wa-nav-back" onclick="waStep(1)">&larr; BACK</button><button class="wa-nav-btn wa-nav-next" onclick="waStep(3)">PREVIEW &rarr;</button></div>
+      </div>
+      <!-- Step 3: Preview & Send -->
+      <div class="wa-panel" id="wp3">
+        <h4>PREVIEW MESSAGE</h4>
+        <div class="wa-preview" id="wa-preview"></div>
+        <div class="wa-nav"><button class="wa-nav-btn wa-nav-back" onclick="waStep(2)">&larr; EDIT</button><button class="wa-nav-btn wa-nav-send" onclick="waSend()">SEND VIA WHATSAPP</button></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 </main>
 
 <script type="module" src="/main.js"></script>
-<!-- WhatsApp form redirect -->
 <script>
+// WhatsApp Modal Logic
+let waSelectedServices = [];
+function openWaModal() { document.getElementById('wa-modal').classList.add('active'); waStep(1); }
+function closeWaModal() { document.getElementById('wa-modal').classList.remove('active'); }
+document.getElementById('wa-modal').addEventListener('click', function(e) { if (e.target === this) closeWaModal(); });
+
+// Service chip toggle
+document.querySelectorAll('.wa-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chip.classList.toggle('selected');
+    const svc = chip.dataset.svc;
+    if (chip.classList.contains('selected')) { if (!waSelectedServices.includes(svc)) waSelectedServices.push(svc); }
+    else { waSelectedServices = waSelectedServices.filter(s => s !== svc); }
+  });
+});
+
+function waStep(n) {
+  document.querySelectorAll('.wa-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('wp'+n).classList.add('active');
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById('ws'+i);
+    dot.classList.remove('active','done');
+    if (i < n) dot.classList.add('done');
+    if (i === n) dot.classList.add('active');
+  }
+  if (n === 3) buildPreview();
+}
+
+function buildPreview() {
+  const name = document.getElementById('wa-name').value || 'Not provided';
+  const phone = document.getElementById('wa-phone').value || 'Not provided';
+  const vehicle = document.getElementById('wa-vehicle').value || 'Not specified';
+  const notes = document.getElementById('wa-notes').value || 'None';
+  const svcs = waSelectedServices.length ? waSelectedServices.join(', ') : 'Not selected';
+  document.getElementById('wa-preview').innerHTML =
+    `<strong>Name:</strong> ${name}\n<strong>Phone:</strong> ${phone}\n<strong>Vehicle:</strong> ${vehicle}\n<strong>Services:</strong> ${svcs}\n<strong>Notes:</strong> ${notes}`;
+}
+
+function waSend() {
+  const name = document.getElementById('wa-name').value || 'Not provided';
+  const phone = document.getElementById('wa-phone').value || 'Not provided';
+  const vehicle = document.getElementById('wa-vehicle').value || 'Not specified';
+  const notes = document.getElementById('wa-notes').value || 'None';
+  const svcs = waSelectedServices.length ? waSelectedServices.join(', ') : 'General Enquiry';
+  const msg = encodeURIComponent(
+    '\u{1F697} *New Enquiry - Auto Palette Website*\n\n' +
+    '*Name:* ' + name + '\n' +
+    '*Phone:* ' + phone + '\n' +
+    '*Vehicle:* ' + vehicle + '\n' +
+    '*Services:* ' + svcs + '\n' +
+    '*Notes:* ' + notes
+  );
+  window.open('https://wa.me/918884471117?text=' + msg, '_blank');
+  closeWaModal();
+  waSelectedServices = [];
+  document.querySelectorAll('.wa-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('wa-name').value = '';
+  document.getElementById('wa-phone').value = '';
+  document.getElementById('wa-vehicle').value = '';
+  document.getElementById('wa-notes').value = '';
+}
+
+// Inline form also uses WhatsApp
 document.addEventListener('submit', function(e) {
   if (e.target.id === 'enquiry-form') {
     e.preventDefault();
@@ -364,27 +473,26 @@ document.addEventListener('submit', function(e) {
     const vehicle = document.getElementById('fvehicle').value;
     const notes = document.getElementById('fnotes').value;
     const msg = encodeURIComponent(
-      `🚗 *New Enquiry from AutoPalette Website*\n\n` +
-      `*Name:* ${name}\n*Phone:* ${phone}\n*Service:* ${service}\n` +
-      `*Vehicle:* ${vehicle || 'Not specified'}\n*Notes:* ${notes || 'None'}`
+      '\u{1F697} *New Enquiry - Auto Palette Website*\n\n' +
+      '*Name:* ' + name + '\n*Phone:* ' + phone + '\n*Service:* ' + service + '\n' +
+      '*Vehicle:* ' + (vehicle || 'Not specified') + '\n*Notes:* ' + (notes || 'None')
     );
     window.open('https://wa.me/918884471117?text=' + msg, '_blank');
     const btn = e.target.querySelector('.btn-submit');
-    btn.textContent = '✓ SENT TO WHATSAPP';
+    btn.textContent = '\u2713 SENT TO WHATSAPP';
     btn.style.background = '#25d366';
     e.target.reset();
     setTimeout(() => { btn.textContent = 'SEND VIA WHATSAPP'; btn.style.background = ''; }, 3000);
   }
 });
-</script>
-<!-- Particle generator -->
-<script>
+
+// Particles
 (function(){
   const c = document.getElementById('particles');
   for(let i=0;i<30;i++){
     const p = document.createElement('div');
     p.className='particle';
-    p.style.cssText=`left:${Math.random()*100}%;--dur:${8+Math.random()*12}s;--delay:${Math.random()*10}s;--drift:${(Math.random()-0.5)*100}px;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;`;
+    p.style.cssText='left:'+Math.random()*100+'%;--dur:'+(8+Math.random()*12)+'s;--delay:'+Math.random()*10+'s;--drift:'+(Math.random()-0.5)*100+'px;width:'+(1+Math.random()*2)+'px;height:'+(1+Math.random()*2)+'px;';
     c.appendChild(p);
   }
 })();
