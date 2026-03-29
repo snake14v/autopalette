@@ -172,44 +172,68 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 }
 .gate-tagline.visible { opacity: 1; }
 
-#btn-enter {
-  margin-top: 2rem;
-  padding: 1rem 3rem;
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  background: transparent;
-  color: var(--gold);
-  border: 2px solid var(--gold);
-  position: relative;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: var(--transition), opacity 0.6s ease, transform 0.6s ease;
-}
-#btn-enter.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-#btn-enter::before {
-  content: '';
+.engine-start-btn {
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(197, 164, 78, 0.3), transparent);
-  transition: left 0.5s;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #330000 0%, #000 70%);
+  border: 4px solid var(--red);
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  box-shadow: 0 0 20px rgba(255, 26, 26, 0.4), inset 0 0 20px rgba(255, 26, 26, 0.4);
+  animation: pulseStart 2s infinite alternate;
+  cursor: none;
+  z-index: 10;
+  transition: all 0.2s;
 }
-#btn-enter:hover::before {
-  left: 100%;
+.engine-start-btn:active {
+  transform: translate(-50%, -50%) scale(0.95);
+  box-shadow: 0 0 50px rgba(255, 26, 26, 0.8), inset 0 0 30px rgba(255, 26, 26, 0.8);
+  background: radial-gradient(circle, #660000 0%, #000 70%);
 }
-#btn-enter:hover {
-  background: var(--gold);
-  color: var(--black);
-  box-shadow: 0 0 30px rgba(197, 164, 78, 0.4);
+.engine-start-btn.started {
+  opacity: 0; pointer-events: none;
+}
+@keyframes pulseStart {
+  0% { box-shadow: 0 0 10px rgba(255, 26, 26, 0.2), inset 0 0 10px rgba(255, 26, 26, 0.2); }
+  100% { box-shadow: 0 0 30px rgba(255, 26, 26, 0.6), inset 0 0 30px rgba(255, 26, 26, 0.6); }
+}
+
+@keyframes shakeGate {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(3px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(1px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+.gate-shake {
+  animation: shakeGate 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+.flash-bang {
+  position: fixed;
+  inset: 0;
+  background: var(--white);
+  z-index: 20000;
+  opacity: 0;
+  pointer-events: none;
+  animation: flashWhite 1s ease-out forwards;
+}
+@keyframes flashWhite {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* Speed lines on gate */

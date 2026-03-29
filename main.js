@@ -3,72 +3,106 @@
    NFS Tachometer Entrance + Scroll Reveal + Parallax Engine
    ============================================================ */
 
-// ---- ENTRANCE GATE: NFS TACHOMETER LOADING ----
+// ---- ENTRANCE GATE: ENGINE START ENGINE ----
 document.addEventListener('DOMContentLoaded', () => {
   const gate = document.getElementById('entrance-gate');
   const mainContent = document.getElementById('main-content');
   const counterEl = document.getElementById('gate-counter-num');
+  const counterWrap = document.getElementById('gate-counter');
   const needle = document.getElementById('tacho-needle');
-  const tagline = document.querySelector('.gate-tagline');
-  const btnEnter = document.getElementById('btn-enter');
+  const tagline = document.getElementById('gate-tagline');
+  const btnStart = document.getElementById('btn-engine-start');
 
-  let count = 0;
-  const targetCount = 100;
-  const duration = 2500; // ms
-  const interval = duration / targetCount;
+  if (!btnStart) return;
 
-  // Animate tachometer counter from 0 to 100
-  const counterInterval = setInterval(() => {
-    count++;
-    if (counterEl) counterEl.textContent = count;
+  btnStart.addEventListener('click', () => {
+    btnStart.classList.add('started');
+    counterWrap.style.opacity = '1';
+    
+    // Rev curve: idle -> rev -> drop -> redline
+    const revSequence = [
+      { t: 0, val: 0 },
+      { t: 400, val: 25 },
+      { t: 900, val: 65 },
+      { t: 1200, val: 40 },
+      { t: 1800, val: 85 },
+      { t: 2000, val: 70 },
+      { t: 2800, val: 100 }
+    ];
 
-    // Rotate needle — from -135deg to 135deg
-    const rotation = -135 + (count / targetCount) * 270;
-    if (needle) needle.setAttribute('transform', `rotate(${rotation} 150 150)`);
+    const startTime = performance.now();
+    const duration = 2800; // total ms
 
-    if (count >= targetCount) {
-      clearInterval(counterInterval);
-
-      // Show tagline and enter button
-      setTimeout(() => {
-        if (tagline) tagline.classList.add('visible');
-      }, 300);
-      setTimeout(() => {
-        if (btnEnter) btnEnter.classList.add('visible');
-      }, 800);
-    }
-  }, interval);
-
-  // Enter button click handler
-  if (btnEnter) {
-    btnEnter.addEventListener('click', () => {
-      gate.classList.add('fade-out');
-      setTimeout(() => {
-        gate.style.display = 'none';
-        if (mainContent) {
-          mainContent.style.display = 'block';
-          mainContent.style.opacity = '0';
-          // Trigger reflow
-          void mainContent.offsetHeight;
-          mainContent.style.transition = 'opacity 1.5s ease';
-          mainContent.style.opacity = '1';
-
-          // Init all animations after content is visible
-          setTimeout(() => {
-            initScrollReveal();
-            initParallax();
-            initNavbar();
-            initCounterAnimation();
-            initCustomCursor();
-            initVectorParallax();
-            initBaSlider();
-            initFaq();
-            document.querySelector('.hero')?.classList.add('loaded');
-          }, 100);
+    function interpolateRev(elapsed) {
+      if (elapsed >= duration) return 100;
+      for (let i = 0; i < revSequence.length - 1; i++) {
+        const p1 = revSequence[i];
+        const p2 = revSequence[i+1];
+        if (elapsed >= p1.t && elapsed <= p2.t) {
+          const progress = (elapsed - p1.t) / (p2.t - p1.t);
+          // Ease in out quad
+          const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+          return p1.val + (p2.val - p1.val) * ease;
         }
-      }, 1200);
-    });
-  }
+      }
+      return 100;
+    }
+
+    function animateEngine(time) {
+      const elapsed = time - startTime;
+      const currentRev = interpolateRev(elapsed);
+      
+      if (counterEl) counterEl.textContent = Math.floor(currentRev);
+
+      // Rotate needle — from -135deg to 135deg
+      const rotation = -135 + (currentRev / 100) * 270;
+      if (needle) needle.setAttribute('transform', `rotate(${rotation} 150 150)`);
+
+      if (elapsed < duration) {
+        requestAnimationFrame(animateEngine);
+      } else {
+        // Hit 100% - Redline!
+        if (needle) needle.setAttribute('stroke', '#ff1a1a'); // needle turns red
+        if (gate) gate.classList.add('gate-shake');
+        tagline.style.opacity = '1';
+        
+        // Add white flash to body
+        const flash = document.createElement('div');
+        flash.className = 'flash-bang';
+        document.body.appendChild(flash);
+
+        // Open vault
+        setTimeout(() => {
+          gate.classList.add('fade-out');
+          setTimeout(() => {
+            gate.style.display = 'none';
+            if (mainContent) {
+              mainContent.style.display = 'block';
+              mainContent.style.opacity = '0';
+              void mainContent.offsetHeight;
+              mainContent.style.transition = 'opacity 1.5s ease';
+              mainContent.style.opacity = '1';
+
+              setTimeout(() => {
+                initScrollReveal();
+                initParallax();
+                initNavbar();
+                initCounterAnimation();
+                initCustomCursor();
+                initVectorParallax();
+                initBaSlider();
+                initFaq();
+                document.querySelector('.hero')?.classList.add('loaded');
+                flash.remove();
+              }, 100);
+            }
+          }, 1200);
+        }, 500);
+      }
+    }
+
+    requestAnimationFrame(animateEngine);
+  });
 });
 
 // ---- SCROLL REVEAL ENGINE ----
