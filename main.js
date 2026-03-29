@@ -8,17 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const gate = document.getElementById('entrance-gate');
   const mainContent = document.getElementById('main-content');
   const counterEl = document.getElementById('gate-counter-num');
-  const counterWrap = document.getElementById('gate-counter');
   const needle = document.getElementById('tacho-needle');
   const tagline = document.getElementById('gate-tagline');
-  const btnStart = document.getElementById('btn-engine-start');
 
-  if (!btnStart) return;
-
-  btnStart.addEventListener('click', () => {
-    btnStart.classList.add('started');
-    counterWrap.style.opacity = '1';
-    
+  // Start engine animation automatically after a short delay
+  setTimeout(() => {
     // Rev curve: idle -> rev -> drop -> redline
     const revSequence = [
       { t: 0, val: 0 },
@@ -102,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     requestAnimationFrame(animateEngine);
-  });
+  }, 500); // 500ms delay before animation starts
 });
 
 // ---- SCROLL REVEAL ENGINE ----
