@@ -34,6 +34,17 @@
 <!-- NOISE OVERLAY -->
 <div class="noise-overlay"></div>
 
+<!-- CUSTOM CURSOR -->
+<div class="custom-cursor" id="custom-cursor"></div>
+<div class="custom-cursor-dot" id="custom-cursor-dot"></div>
+
+<!-- FLOATING VECTORS -->
+<div class="vector-bg" id="vector-bg">
+  <svg class="v-shape v1" viewBox="0 0 100 100"><polygon points="50,0 100,25 100,75 50,100 0,75 0,25" fill="none" stroke="rgba(197,164,78,0.1)" stroke-width="2"/></svg>
+  <svg class="v-shape v2" viewBox="0 0 100 100"><polygon points="50,0 100,25 100,75 50,100 0,75 0,25" fill="none" stroke="rgba(197,164,78,0.05)" stroke-width="4"/></svg>
+  <svg class="v-shape v3" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,26,26,0.05)" stroke-width="2"/></svg>
+</div>
+
 <!-- FLOATING PARTICLES -->
 <div class="particles" id="particles"></div>
 
@@ -111,6 +122,7 @@
     <a href="#services" class="nav-link" onclick="closeMenu()">Services</a>
     <a href="#gallery" class="nav-link" onclick="closeMenu()">Gallery</a>
     <a href="#reviews" class="nav-link" onclick="closeMenu()">Reviews</a>
+    <a href="#faq" class="nav-link" onclick="closeMenu()">FAQ</a>
     <a href="#contact" class="nav-link" onclick="closeMenu()">Contact</a>
     <button class="nav-link nav-cta" onclick="openWaModal(); closeMenu();">BOOK NOW</button>
   </div>
@@ -250,6 +262,30 @@
   </div>
 </section>
 
+<!-- TRANSFORMATION -->
+<section class="transformation" id="transformation">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">◆ THE RESULT ◆</div>
+      <h2 class="section-heading">BEFORE & AFTER</h2>
+      <p class="section-sub">Drag the slider to see the Auto Palette difference.</p>
+    </div>
+    <div class="ba-slider reveal-scale" id="ba-slider">
+      <img src="/gallery_bmw.png" alt="After" class="ba-after"/>
+      <div class="ba-before-wrap" id="ba-before-wrap">
+        <img src="/gallery_bmw.png" alt="Before" class="ba-before"/>
+      </div>
+      <div class="ba-handle" id="ba-handle">
+        <div class="ba-handle-line"></div>
+        <div class="ba-handle-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- PROCESS -->
 <section class="process" id="process">
   <div class="container">
@@ -314,6 +350,38 @@
   </div>
 </section>
 
+<!-- FAQ SECTION -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="faq-grid">
+      <div class="reveal-left">
+        <div class="section-label">◆ INSIGHTS ◆</div>
+        <h2 class="section-heading" style="font-size:3.5rem;">FREQUENTLY ASKED<br/>QUESTIONS</h2>
+        <p class="section-sub" style="margin: 1rem 0 2rem 0;">Everything you need to know about our premium detailing and protection services.</p>
+        <button class="btn-primary" onclick="openWaModal()">ASK ANOTHER QUESTION</button>
+      </div>
+      <div class="faq-list reveal-right">
+        <div class="faq-item">
+          <button class="faq-btn">How long does PPF installation take? <span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>A full-body Paint Protection Film (PPF) installation typically takes 3 to 5 days. This includes washing, decontamination, paint correction, film application, and curing time.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-btn">What is the lifespan of Graphene Ceramic Coating? <span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>Our premium WaveX Graphene Ceramic Coating provides peak durability for 3 to 5 years with proper maintenance and annual inspections.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-btn">Do you offer matte or satin finish PPF? <span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>Yes, we offer both high-gloss and matte (stealth) PPF. Applying matte PPF over glossy paint instantly transforms the look while offering maximum protection.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-btn">Can deep scratches be removed with polishing? <span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>Light to medium scratches and swirl marks can be fully removed. Deep scratches that have penetrated the clear coat may require touch-up paint or panel repainting at our Body Shop.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CONTACT -->
 <section class="contact" id="contact">
   <div class="container">
@@ -372,7 +440,7 @@
         </div>
       </div>
       <div class="footer-col"><h4>SERVICES</h4><a href="#services">Paint Protection Film</a><a href="#services">Ceramic Coating</a><a href="#services">Body Shop</a><a href="#services">Detailing</a><a href="#services">Modifications</a><a href="#services">Accessories</a></div>
-      <div class="footer-col"><h4>QUICK LINKS</h4><a href="#home">Home</a><a href="#about">About</a><a href="#gallery">Gallery</a><a href="#reviews">Reviews</a><a href="#contact">Contact</a></div>
+      <div class="footer-col"><h4>QUICK LINKS</h4><a href="#home">Home</a><a href="#about">About</a><a href="#gallery">Gallery</a><a href="#reviews">Reviews</a><a href="#faq">FAQ</a><a href="#contact">Contact</a></div>
       <div class="footer-col"><h4>CONTACT</h4><a href="tel:+919900012090">+91 9900012090</a><a href="tel:+918884471117">+91 8884471117</a><a href="https://wa.me/918884471117" target="_blank">WhatsApp Us</a><a href="https://www.instagram.com/autopalette_/" target="_blank">@autopalette_</a></div>
     </div>
     <div class="footer-bottom">

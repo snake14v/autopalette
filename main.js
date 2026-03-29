@@ -59,6 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
             initParallax();
             initNavbar();
             initCounterAnimation();
+            initCustomCursor();
+            initVectorParallax();
+            initBaSlider();
+            initFaq();
             document.querySelector('.hero')?.classList.add('loaded');
           }, 100);
         }
@@ -212,8 +216,103 @@ document.addEventListener('mousemove', (e) => {
   card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-8px)`;
 });
 
-document.addEventListener('mouseleave', (e) => {
+ document.addEventListener('mouseleave', (e) => {
   if (e.target.closest('.service-card')) {
     e.target.closest('.service-card').style.transform = '';
   }
 }, true);
+
+// ---- CUSTOM CURSOR ----
+function initCustomCursor() {
+  const cursor = document.getElementById('custom-cursor');
+  const dot = document.getElementById('custom-cursor-dot');
+  if(!cursor || !dot) return;
+
+  let mouseX = 0;
+  let mouseY = 0;
+  let cursorX = 0;
+  let cursorY = 0;
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    dot.style.transform = `translate(${mouseX - 3}px, ${mouseY - 3}px)`;
+  });
+
+  function render() {
+    cursorX += (mouseX - cursorX) * 0.2;
+    cursorY += (mouseY - cursorY) * 0.2;
+    cursor.style.transform = `translate(${cursorX - 15}px, ${cursorY - 15}px)`;
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+
+  const hoverElements = document.querySelectorAll('a, button, .service-card, .gallery-item, .wa-chip');
+  hoverElements.forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+  });
+}
+
+// ---- VECTOR MOUSE PARALLAX ----
+function initVectorParallax() {
+  const v1 = document.querySelector('.v1');
+  const v2 = document.querySelector('.v2');
+  const v3 = document.querySelector('.v3');
+
+  document.addEventListener('mousemove', (e) => {
+    const x = e.clientX / window.innerWidth - 0.5;
+    const y = e.clientY / window.innerHeight - 0.5;
+
+    if(v1) v1.style.transform = `translate(${x * -50}px, ${y * -50}px) rotate(${x * 20}deg)`;
+    if(v2) v2.style.transform = `translate(${x * 80}px, ${y * 80}px) rotate(${x * -20}deg)`;
+    if(v3) v3.style.transform = `translate(${x * -30}px, ${y * -30}px)`;
+  });
+}
+
+// ---- BEFORE/AFTER SLIDER ----
+function initBaSlider() {
+  const slider = document.getElementById('ba-slider');
+  const wrap = document.getElementById('ba-before-wrap');
+  const handle = document.getElementById('ba-handle');
+  if(!slider) return;
+
+  let isDragging = false;
+  
+  const move = (x) => {
+    const rect = slider.getBoundingClientRect();
+    let pos = x - rect.left;
+    pos = Math.max(0, Math.min(pos, rect.width));
+    const percent = (pos / rect.width) * 100;
+    wrap.style.width = percent + '%';
+    handle.style.left = percent + '%';
+  };
+
+  slider.addEventListener('mousedown', (e) => { isDragging = true; move(e.clientX); });
+  window.addEventListener('mouseup', () => { isDragging = false; });
+  window.addEventListener('mousemove', (e) => { if(isDragging) move(e.clientX); });
+
+  slider.addEventListener('touchstart', (e) => { isDragging = true; move(e.touches[0].clientX); }, {passive:true});
+  window.addEventListener('touchend', () => { isDragging = false; });
+  window.addEventListener('touchmove', (e) => { if(isDragging) move(e.touches[0].clientX); }, {passive:true});
+}
+
+// ---- FAQ ACCORDION ----
+function initFaq() {
+  const faqItems = document.querySelectorAll('.faq-item');
+  faqItems.forEach(item => {
+    const btn = item.querySelector('.faq-btn');
+    const content = item.querySelector('.faq-content');
+    btn.addEventListener('click', () => {
+      const isActive = item.classList.contains('active');
+      faqItems.forEach(i => {
+        i.classList.remove('active');
+        i.querySelector('.faq-content').style.maxHeight = null;
+      });
+      if (!isActive) {
+        item.classList.add('active');
+        content.style.maxHeight = content.scrollHeight + 'px';
+      }
+    });
+  });
+}
