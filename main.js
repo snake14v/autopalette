@@ -84,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 initCounterAnimation();
                 initCustomCursor();
                 initVectorParallax();
-                initBaSlider();
                 initFaq();
                 document.querySelector('.hero')?.classList.add('loaded');
                 flash.remove();
@@ -296,33 +295,6 @@ function initVectorParallax() {
     if(v2) v2.style.transform = `translate(${x * 80}px, ${y * 80}px) rotate(${x * -20}deg)`;
     if(v3) v3.style.transform = `translate(${x * -30}px, ${y * -30}px)`;
   });
-}
-
-// ---- BEFORE/AFTER SLIDER ----
-function initBaSlider() {
-  const slider = document.getElementById('ba-slider');
-  const wrap = document.getElementById('ba-before-wrap');
-  const handle = document.getElementById('ba-handle');
-  if(!slider) return;
-
-  let isDragging = false;
-  
-  const move = (x) => {
-    const rect = slider.getBoundingClientRect();
-    let pos = x - rect.left;
-    pos = Math.max(0, Math.min(pos, rect.width));
-    const percent = (pos / rect.width) * 100;
-    wrap.style.width = percent + '%';
-    handle.style.left = percent + '%';
-  };
-
-  slider.addEventListener('mousedown', (e) => { isDragging = true; move(e.clientX); });
-  window.addEventListener('mouseup', () => { isDragging = false; });
-  window.addEventListener('mousemove', (e) => { if(isDragging) move(e.clientX); });
-
-  slider.addEventListener('touchstart', (e) => { isDragging = true; move(e.touches[0].clientX); }, {passive:true});
-  window.addEventListener('touchend', () => { isDragging = false; });
-  window.addEventListener('touchmove', (e) => { if(isDragging) move(e.touches[0].clientX); }, {passive:true});
 }
 
 // ---- FAQ ACCORDION ----
