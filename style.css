@@ -2267,3 +2267,227 @@ a, button, input, select, textarea, .wa-chip { cursor: none; }
   align-items: center;
   gap: 0.5rem;
 }
+
+/* ============================================================
+   RGB PINSTRIPE INTEGRATION — GLOBAL
+   ============================================================ */
+
+/* Shared RGB keyframe */
+@keyframes rgbPinstripe {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+/* RGB Pinstripe mixin via pseudo-element */
+.rgb-pin {
+  position: relative;
+}
+.rgb-pin::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00e5ff, #4b0082, #ff00d4, #ff0000);
+  background-size: 300% 100%;
+  animation: rgbPinstripe 4s linear infinite;
+  opacity: 0.7;
+}
+
+/* ---- NAVBAR bottom pinstripe ---- */
+.navbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ff0000, #ff7f00, #ffff00, #00ff00, #00e5ff, #4b0082, #ff00d4, transparent);
+  background-size: 300% 100%;
+  animation: rgbPinstripe 5s linear infinite;
+  opacity: 0.4;
+}
+
+/* ---- SECTION DIVIDERS ---- */
+.section-divider {
+  position: relative;
+}
+.section-divider::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ff0000, #ffff00, #00ff00, #00e5ff, #ff00d4, transparent);
+  background-size: 300% 100%;
+  animation: rgbPinstripe 6s linear infinite;
+  opacity: 0.3;
+}
+
+/* ---- SERVICE CARDS — top RGB line on hover ---- */
+.service-card {
+  position: relative;
+  overflow: hidden;
+}
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00e5ff, #4b0082, #ff00d4, #ff0000);
+  background-size: 300% 100%;
+  animation: rgbPinstripe 3s linear infinite;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.service-card:hover::before {
+  opacity: 1;
+}
+
+/* ---- ABOUT SECTION — side pinstripe ---- */
+.about {
+  position: relative;
+}
+.about::before {
+  content: '';
+  position: absolute;
+  top: 15%; bottom: 15%; left: 0;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, #ff0000, #ffff00, #00ff00, #00e5ff, #ff00d4, transparent);
+  background-size: 100% 300%;
+  animation: rgbPinstripeV 5s linear infinite;
+  opacity: 0.3;
+}
+
+@keyframes rgbPinstripeV {
+  0% { background-position: 50% 0%; }
+  100% { background-position: 50% 300%; }
+}
+
+/* ---- PROCESS STEPS — bottom accent ---- */
+.process-step {
+  position: relative;
+  overflow: hidden;
+}
+.process-step::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #00e5ff, var(--gold), #ff00d4, transparent);
+  background-size: 200% 100%;
+  animation: rgbPinstripe 4s linear infinite;
+  opacity: 0.4;
+}
+
+/* ---- OFFER SECTION — top & bottom RGB bars ---- */
+.offer-section {
+  position: relative;
+}
+.offer-section::before,
+.offer-section::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00e5ff, #4b0082, #ff00d4, #ff0000);
+  background-size: 300% 100%;
+  animation: rgbPinstripe 3s linear infinite;
+  opacity: 0.6;
+}
+.offer-section::before { top: 0; }
+.offer-section::after { bottom: 0; }
+
+/* ---- GALLERY — RGB frame on hover ---- */
+.gallery-item {
+  position: relative;
+}
+.gallery-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid transparent;
+  transition: all 0.4s;
+  pointer-events: none;
+}
+.gallery-item:hover::after {
+  border-image: linear-gradient(135deg, #ff0000, #ffff00, #00ff00, #00e5ff, #ff00d4) 1;
+}
+
+/* ---- CONTACT FORM — input focus RGB ---- */
+.form-control:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 1px var(--cyan), 0 0 15px rgba(0, 229, 255, 0.1);
+}
+
+/* ---- LOCATION CARDS — left RGB bar ---- */
+.location-card {
+  position: relative;
+  overflow: hidden;
+}
+.location-card::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 2px;
+  background: linear-gradient(180deg, #ff0000, #ffff00, #00ff00, #00e5ff, #ff00d4);
+  background-size: 100% 300%;
+  animation: rgbPinstripeV 4s linear infinite;
+  opacity: 0.5;
+}
+
+/* ---- REVIEWS TRACK — bottom pinstripe ---- */
+.reviews {
+  position: relative;
+}
+.reviews::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 5%; right: 5%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ff0000, #ffff00, #00e5ff, #ff00d4, transparent);
+  background-size: 300% 100%;
+  animation: rgbPinstripe 6s linear infinite;
+  opacity: 0.3;
+}
+
+/* ---- ESTIMATOR DISPLAY — RGB top accent ---- */
+.estimator-display::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #00e5ff, #4b0082, #ff00d4, #ff0000);
+  background-size: 300% 100%;
+  animation: rgbPinstripe 3s linear infinite;
+  opacity: 0.8;
+}
+
+/* ---- FAQ SECTION — side pinstripe ---- */
+.faq {
+  position: relative;
+}
+.faq::after {
+  content: '';
+  position: absolute;
+  top: 10%; bottom: 10%; right: 0;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, #00e5ff, var(--gold), #ff00d4, transparent);
+  background-size: 100% 300%;
+  animation: rgbPinstripeV 5s linear infinite;
+  opacity: 0.25;
+}
+
+/* ---- SCROLL INDICATOR — pulsing RGB dot ---- */
+.scroll-indicator .arrow::after {
+  content: '';
+  display: block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  margin: 8px auto 0;
+  background: linear-gradient(90deg, #ff0000, #00e5ff, #ff00d4);
+  background-size: 300% 100%;
+  animation: rgbPinstripe 2s linear infinite;
+}
+
+/* ---- BRANDS TICKER — RGB bottom border ---- */
+.brands-ticker {
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, transparent 5%, #ff0000, #ffff00, #00ff00, #00e5ff, #ff00d4, transparent 95%) 1;
+}
