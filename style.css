@@ -1804,3 +1804,132 @@ a, button, input, select, textarea, .wa-chip { cursor: none; }
   .gate-logo { width: 140px; }
 }
 
+/* ============================================================
+   CYBERPUNK MISSION BRIEFING & GRAPHICS
+   ============================================================ */
+.cyberpunk-card {
+  position: absolute;
+  bottom: 50px;
+  right: 50px;
+  width: 320px;
+  background: rgba(10, 10, 10, 0.9);
+  border: 1px solid rgba(197, 164, 78, 0.3);
+  padding: 1.5rem;
+  backdrop-filter: blur(15px);
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,0,0,0.8);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+  text-align: left;
+}
+
+.brief-glitch-layer {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(197,164,78,0.03) 0px, transparent 1px, transparent 2px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.brief-header {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--gold);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 2;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--gold);
+  animation: blink 1.2s infinite ease-in-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.8); }
+}
+
+.brief-content { position: relative; z-index: 2; }
+
+.brief-item {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.75rem;
+  margin-bottom: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.brief-item .label { color: var(--gray-dark); margin-right: 0.8rem; font-size: 0.65rem; }
+
+.neon-gold {
+  color: var(--gold-bright) !important;
+  text-shadow: 0 0 8px rgba(232, 201, 110, 0.8);
+}
+
+.glow-pulse { animation: glowPulse 2s infinite alternate; }
+@keyframes glowPulse {
+  from { text-shadow: 0 0 2px var(--gold); }
+  to { text-shadow: 0 0 12px var(--gold), 0 0 20px rgba(197, 164, 78, 0.3); }
+}
+
+.terminal-cursor {
+  display: inline-block;
+  width: 8px;
+  background: var(--gold);
+  margin-left: 2px;
+  animation: cursorBlink 1s infinite steps(1);
+}
+@keyframes cursorBlink { 50% { opacity: 0; } }
+
+.corner-accents .accent {
+  position: absolute;
+  width: 20px; height: 20px;
+  border: 2px solid rgba(197, 164, 78, 0.4);
+}
+.accent.tl { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.accent.br { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+
+/* Cinematic Foundations */
+.cinematic-vignette { position: fixed; inset: 0; background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.6) 100%); pointer-events: none; z-index: 9998; }
+.film-grain { position: fixed; inset: -100%; width: 300%; height: 300%; background-image: url('https://grainy-gradients.vercel.app/noise.svg'); opacity: 0.04; pointer-events: none; z-index: 9997; animation: grainShift 8s steps(10) infinite; }
+@keyframes grainShift { 0% { transform: translate(0,0); } 10% { transform: translate(-5%,-5%); } 50% { transform: translate(-10%,-5%); } 100% { transform: translate(0,0); } }
+.scanlines { position: fixed; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03)); background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 9996; opacity: 0.4; }
+
+/* Global Graphics */
+.rgb-underglow { position: relative; }
+.rgb-underglow::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff); background-size: 200% auto; animation: rgbShift 3s linear infinite; opacity: 0.8; }
+@keyframes rgbShift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+.gold-gloss { background: linear-gradient(135deg, #c5a44e 0%, #e8c96e 50%, #c5a44e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; position: relative; display: inline-block; }
+.gold-gloss::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transform: skewX(-25deg); animation: goldShine 3s infinite; }
+@keyframes goldShine { 0% { left: -100%; } 20% { left: 100%; } 100% { left: 100%; } }
+
+/* Transformation Slider */
+.transformation { padding: 10rem 0; background: var(--black); position: relative; overflow: hidden; }
+.comparison-container { max-width: 1100px; margin: 4rem auto 0; position: relative; aspect-ratio: 16/9; border: 1px solid var(--gray-darker); overflow: hidden; box-shadow: 0 20px 80px rgba(0,0,0,0.8); }
+.before-after-slider { position: relative; width: 100%; height: 100%; }
+.img-after, .img-before { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.img-before { width: 50%; border-right: 2px solid var(--gold); z-index: 2; overflow: hidden; }
+.slider-handle { position: absolute; top: 0; left: 50%; bottom: 0; width: 4px; background: var(--gold); z-index: 10; transform: translateX(-50%); cursor: ew-resize; }
+.handle-circle { width: 54px; height: 54px; background: var(--black); border: 2px solid var(--gold); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; color: var(--gold); box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+
+/* Brands Ticker */
+.brands-ticker { background: #050505; padding: 3rem 0; border-top: 1px solid var(--gray-darker); border-bottom: 1px solid var(--gray-darker); overflow: hidden; }
+.brands-track { display: flex; align-items: center; gap: 5rem; width: max-content; animation: brandsScroll 40s linear infinite; }
+.brand-item { font-family: var(--font-display); font-size: 1.4rem; color: var(--gray-dark); letter-spacing: 4px; transition: 0.3s; }
+.brand-item:hover { color: var(--gold); transform: scale(1.1); text-shadow: 0 0 20px rgba(197, 164, 78, 0.5); }
+@keyframes brandsScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+/* RGB Tacho */
+.rgb-redline { animation: rgbFlicker 0.2s infinite alternate; filter: drop-shadow(0 0 10px #ff0000); }
+@keyframes rgbFlicker { 0% { stroke: #ff0000; } 33% { stroke: #00ff00; } 66% { stroke: #0000ff; } 100% { stroke: #ff0000; } }
+
