@@ -38,6 +38,11 @@
 <div class="custom-cursor" id="custom-cursor"></div>
 <div class="custom-cursor-dot" id="custom-cursor-dot"></div>
 
+<!-- CINEMATIC OVERLAYS -->
+<div class="cinematic-vignette"></div>
+<div class="film-grain"></div>
+<div class="scanlines"></div>
+
 <!-- FLOATING VECTORS -->
 <div class="vector-bg" id="vector-bg">
   <svg class="v-shape v1" viewBox="0 0 100 100"><polygon points="50,0 100,25 100,75 50,100 0,75 0,25" fill="none" stroke="rgba(197,164,78,0.1)" stroke-width="2"/></svg>
@@ -107,6 +112,8 @@
         <line x1="150" y1="25" x2="150" y2="40" transform="rotate(108 150 150)"/>
         <line x1="150" y1="25" x2="150" y2="40" transform="rotate(135 150 150)"/>
       </g>
+      <!-- Brands in Tacho -->
+      <text x="150" y="240" text-anchor="middle" fill="#333" font-family="Orbitron,sans-serif" font-size="8" letter-spacing="2">3M · WAVEX · MEGUIAR'S</text>
       <!-- Red zone -->
       <path d="M 150 150 L 245 50" stroke="#ff1a1a" stroke-width="2" opacity="0.3" transform="rotate(20 150 150)"/>
       <path d="M 150 150 L 245 50" stroke="#ff1a1a" stroke-width="2" opacity="0.3" transform="rotate(35 150 150)"/>
@@ -127,7 +134,7 @@
 <main id="main-content" style="display:none;">
 
 <!-- TOP OFFER TICKER -->
-<div class="top-ticker">
+<div class="top-ticker rgb-underglow">
   <div class="ticker-track">
     <div class="ticker-item"><span>★</span> 50% OFF GRAND OPENING OFFER <span>★</span></div>
     <div class="ticker-item"><span>★</span> PREMIUM PPF STARTING @ ₹45,000 <span>★</span></div>
@@ -172,15 +179,55 @@
   </div>
   <div class="hero-content">
     <div class="hero-badge reveal"><span class="line"></span>ESTD 2022 · JP NAGAR, BENGALURU<span class="line"></span></div>
-    <h1 class="hero-title reveal delay-1">WE DON'T DETAIL<br/><span class="outline-text">WE PERFECT</span></h1>
+    <h1 class="hero-title reveal delay-1">WE DON'T DETAIL<br/><span class="outline-text glitch-text gold-gloss" data-text="WE PERFECT">WE PERFECT</span></h1>
     <p class="hero-subtitle reveal delay-2">"The underground sanctuary for automotive perfection."</p>
     <div class="hero-cta-group reveal delay-3">
       <button class="btn-primary" onclick="openWaModal()">BOOK CONSULTATION</button>
       <a href="#services" class="btn-secondary">EXPLORE SERVICES</a>
     </div>
+    <div class="hero-mission-brief reveal delay-4 cyberpunk-card">
+      <div class="brief-glitch-layer"></div>
+      <div class="brief-header">
+        <span class="status-dot"></span> 
+        [ MISSION_BRIEFING_v2.0 ]
+      </div>
+      <div class="brief-content">
+        <div class="brief-item"><span class="label">TARGET:</span> <span class="value neon-gold">AUTOMOTIVE_PERFECTION</span></div>
+        <div class="brief-item"><span class="label">SECTOR:</span> <span class="value">JP_NAGAR // BGR_080</span></div>
+        <div class="brief-item"><span class="label">STATUS:</span> <span class="value glow-pulse">VAULT_SECURED</span> <span class="terminal-cursor">_</span></div>
+      </div>
+      <div class="corner-accents">
+        <div class="accent tl"></div>
+        <div class="accent br"></div>
+      </div>
+      <div class="brief-scanner"></div>
+    </div>
   </div>
   <div class="scroll-indicator"><span>SCROLL</span><div class="arrow"></div></div>
 </section>
+
+<!-- BRAND LOGOS TICKER -->
+<div class="brands-ticker">
+  <div class="brands-track">
+    <div class="brand-item">3M</div>
+    <div class="brand-item">WAVEX</div>
+    <div class="brand-item">MEGUIAR'S</div>
+    <div class="brand-item">AVERY DENNISON</div>
+    <div class="brand-item">ULTRA NANO SHIELD</div>
+    <div class="brand-item">GARWARE PPF</div>
+    <div class="brand-item">RUPES</div>
+    <div class="brand-item">CARPRO</div>
+    <!-- Duplicate for seamless scroll -->
+    <div class="brand-item">3M</div>
+    <div class="brand-item">WAVEX</div>
+    <div class="brand-item">MEGUIAR'S</div>
+    <div class="brand-item">AVERY DENNISON</div>
+    <div class="brand-item">ULTRA NANO SHIELD</div>
+    <div class="brand-item">GARWARE PPF</div>
+    <div class="brand-item">RUPES</div>
+    <div class="brand-item">CARPRO</div>
+  </div>
+</div>
 
 <!-- SECTION DIVIDER -->
 <div class="section-divider"><svg viewBox="0 0 1440 80" preserveAspectRatio="none"><polygon fill="#0f0f0f" points="0,80 1440,80 1440,40 720,0 0,40"/></svg></div>
@@ -206,6 +253,34 @@
           <div class="stat-box reveal delay-2"><span class="stat-num" data-count="5" data-suffix=".0★">0</span><span class="stat-label">Google Rating</span></div>
           <div class="stat-box reveal delay-3"><span class="stat-num" data-count="3" data-suffix="+">0</span><span class="stat-label">Years Perfecting</span></div>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSFORMATION SLIDER -->
+<section class="transformation" id="transformation">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label glitch-text" data-text="◆ THE TRANSFORMATION ◆">◆ THE TRANSFORMATION ◆</div>
+      <h2 class="section-heading">WITNESS THE MAGIC</h2>
+      <p class="section-sub">From weary to worthy. Slide to reveal the Auto Palette difference.</p>
+    </div>
+    <div class="comparison-container reveal-scale">
+      <div class="before-after-slider" id="ba-slider">
+        <div class="img-after" style="background-image: url('/gallery_teaser.png');"></div>
+        <div class="img-before" id="ba-before" style="background-image: url('/gallery_teaser.png'); filter: grayscale(1) contrast(1.2) brightness(0.7) sepia(0.2) blur(1px);">
+          <div class="label-before">DIRTY / UNPROTECTED</div>
+        </div>
+        <div class="slider-handle" id="ba-handle">
+          <div class="handle-line"></div>
+          <div class="handle-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="handle-line"></div>
+        </div>
+        <div class="label-after">DETAILED & PPF ARMORED</div>
       </div>
     </div>
   </div>
@@ -447,6 +522,19 @@
       <div class="footer-col"><h4>SERVICES</h4><a href="#services">Paint Protection Film</a><a href="#services">Ceramic Coating</a><a href="#services">Body Shop</a><a href="#services">Detailing</a><a href="#services">Modifications</a><a href="#services">Accessories</a></div>
       <div class="footer-col"><h4>QUICK LINKS</h4><a href="#home">Home</a><a href="#about">About</a><a href="#gallery">Gallery</a><a href="#reviews">Reviews</a><a href="#faq">FAQ</a><a href="#contact">Contact</a></div>
       <div class="footer-col"><h4>CONTACT</h4><a href="tel:+919900012090">+91 9900012090</a><a href="tel:+918884471117">+91 8884471117</a><a href="https://wa.me/918884471117" target="_blank">WhatsApp Us</a><a href="https://www.instagram.com/autopalette_/" target="_blank">@autopalette_</a></div>
+      <div class="footer-col">
+        <h4>OFFICIAL PARTNERS</h4>
+        <div class="footer-brands">
+          <span class="footer-brand-item">3M</span>
+          <span class="footer-brand-item">WAVEX</span>
+          <span class="footer-brand-item">MEGUIAR'S</span>
+          <span class="footer-brand-item">ULTRANANOSHIELD</span>
+          <span class="footer-brand-item">GARWARE</span>
+          <span class="footer-brand-item">RUPES</span>
+          <span class="footer-brand-item">CARPRO</span>
+          <span class="footer-brand-item">AVERY DENNISON</span>
+        </div>
+      </div>
     </div>
     <div class="footer-bottom">
       <p>&copy; 2026 Auto Palette. All Rights Reserved.</p>

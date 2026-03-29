@@ -56,7 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(animateEngine);
       } else {
         // Hit 100% - Redline!
-        if (needle) needle.setAttribute('stroke', '#ff1a1a'); // needle turns red
+        if (needle) {
+          needle.setAttribute('stroke', '#ff1a1a'); // needle turns red
+          needle.classList.add('rgb-redline');
+        }
         if (gate) gate.classList.add('gate-shake');
         tagline.style.opacity = '1';
         
@@ -85,6 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 initCustomCursor();
                 initVectorParallax();
                 initFaq();
+                initTransformationSlider();
+                initMagneticButtons();
                 document.querySelector('.hero')?.classList.add('loaded');
                 flash.remove();
               }, 100);
@@ -314,5 +319,39 @@ function initFaq() {
         content.style.maxHeight = content.scrollHeight + 'px';
       }
     });
+  });
+}
+
+// ---- TRANSFORMATION SLIDER ----
+function initTransformationSlider() {
+  const slider = document.getElementById('ba-slider');
+  const handle = document.getElementById('ba-handle');
+  const overlay = document.getElementById('ba-before');
+  if(!slider || !handle || !overlay) return;
+
+  const moveSlider = (e) => {
+    const rect = slider.getBoundingClientRect();
+    let x = ((e.clientX || (e.touches && e.touches[0].clientX)) - rect.left);
+    if (x < 0) x = 0; if (x > rect.width) x = rect.width;
+    const p = (x / rect.width) * 100;
+    handle.style.left = p + '%';
+    overlay.style.width = p + '%';
+  };
+
+  slider.addEventListener('mousemove', moveSlider);
+  slider.addEventListener('touchmove', (e) => { moveSlider(e); }, {passive: false});
+}
+
+// ---- MAGNETIC BUTTONS ----
+function initMagneticButtons() {
+  const btns = document.querySelectorAll('.btn-primary, .btn-secondary, .nav-cta, .offer-cta');
+  btns.forEach(btn => {
+    btn.addEventListener('mousemove', (e) => {
+      const rect = btn.getBoundingClientRect();
+      const x = (e.clientX - rect.left - rect.width/2) * 0.35;
+      const y = (e.clientY - rect.top - rect.height/2) * 0.35;
+      btn.style.transform = `translate(${x}px, ${y}px)`;
+    });
+    btn.addEventListener('mouseleave', () => btn.style.transform = '');
   });
 }
