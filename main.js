@@ -16,16 +16,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Rev curve: idle -> rev -> drop -> redline
     const revSequence = [
       { t: 0, val: 0 },
-      { t: 400, val: 25 },
-      { t: 900, val: 65 },
-      { t: 1200, val: 40 },
-      { t: 1800, val: 85 },
-      { t: 2000, val: 70 },
-      { t: 2800, val: 100 }
+      { t: 500, val: 25 },
+      { t: 1000, val: 65 },
+      { t: 1400, val: 40 },
+      { t: 2000, val: 85 },
+      { t: 2300, val: 70 },
+      { t: 3000, val: 100 }
     ];
 
     const startTime = performance.now();
-    const duration = 2800; // total ms
+    const duration = 3000; // 3 seconds
 
     function interpolateRev(elapsed) {
       if (elapsed >= duration) return 100;
