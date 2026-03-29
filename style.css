@@ -255,6 +255,34 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   to { transform: translateX(100vw); }
 }
 
+/* Loading Screen Brand Vectors */
+.brand-vectors {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1; /* Above background but behind counter */
+}
+.brand-vector {
+  position: absolute;
+  stroke: var(--gold);
+  opacity: 0;
+  animation: floatBrand linear infinite;
+}
+.brand-vector.audi { width: 350px; top: 15%; left: -400px; animation-duration: 18s; animation-delay: 0s; }
+.brand-vector.toyota { width: 300px; top: 45%; left: -400px; animation-duration: 24s; animation-delay: 2s; }
+.brand-vector.bmw { width: 280px; bottom: 15%; left: -400px; animation-duration: 20s; animation-delay: 4s; }
+.brand-vector.hyundai { width: 320px; top: 70%; left: -400px; animation-duration: 26s; animation-delay: 6s; }
+.brand-vector.honda { width: 250px; top: 5%; left: -400px; animation-duration: 22s; animation-delay: 8s; }
+.brand-vector.porsche { width: 260px; top: 60%; left: -400px; animation-duration: 30s; animation-delay: 10s; }
+
+@keyframes floatBrand {
+  0% { transform: translateX(0) scale(0.8) rotate(-10deg); opacity: 0; }
+  10% { opacity: 0.08; }
+  80% { opacity: 0.08; }
+  100% { transform: translateX(120vw) scale(1.3) rotate(15deg); opacity: 0; }
+}
+
 /* ============================================================
    TOP OFFER TICKER
    ============================================================ */
