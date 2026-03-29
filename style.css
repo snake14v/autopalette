@@ -1913,23 +1913,223 @@ a, button, input, select, textarea, .wa-chip { cursor: none; }
 .gold-gloss::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transform: skewX(-25deg); animation: goldShine 3s infinite; }
 @keyframes goldShine { 0% { left: -100%; } 20% { left: 100%; } 100% { left: 100%; } }
 
-/* Transformation Slider */
-.transformation { padding: 10rem 0; background: var(--black); position: relative; overflow: hidden; }
-.comparison-container { max-width: 1100px; margin: 4rem auto 0; position: relative; aspect-ratio: 16/9; border: 1px solid var(--gray-darker); overflow: hidden; box-shadow: 0 20px 80px rgba(0,0,0,0.8); }
-.before-after-slider { position: relative; width: 100%; height: 100%; }
-.img-after, .img-before { position: absolute; inset: 0; background-size: cover; background-position: center; }
-.img-before { width: 50%; border-right: 2px solid var(--gold); z-index: 2; overflow: hidden; }
-.slider-handle { position: absolute; top: 0; left: 50%; bottom: 0; width: 4px; background: var(--gold); z-index: 10; transform: translateX(-50%); cursor: ew-resize; }
-.handle-circle { width: 54px; height: 54px; background: var(--black); border: 2px solid var(--gold); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; color: var(--gold); box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+/* ============================================================
+   PRICE ESTIMATOR — Tactical Console
+   ============================================================ */
+.price-estimator {
+  padding: 8rem 0;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.estimator-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-top: 4rem;
+}
+
+.estimator-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.control-group label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  color: var(--gray);
+  margin-bottom: 1rem;
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+}
+
+.option-btn {
+  padding: 1rem 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--gray-darker);
+  color: var(--gray);
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.option-btn:hover {
+  border-color: var(--gold-dim);
+  color: var(--white);
+}
+
+.option-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(197, 164, 78, 0.08);
+  box-shadow: 0 0 15px rgba(197, 164, 78, 0.1);
+}
+
+.option-btn.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--gold);
+}
+
+.estimator-display {
+  background: var(--bg-card);
+  border: 1px solid var(--gray-darker);
+  padding: 3rem;
+  text-align: center;
+  position: relative;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+}
+
+.display-header {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 4px;
+  color: var(--gray);
+  margin-bottom: 2rem;
+}
+
+.price-output {
+  font-family: var(--font-heading);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3rem;
+  margin-bottom: 2rem;
+}
+
+.price-output .currency {
+  font-size: 2rem;
+  color: var(--gold);
+}
+
+.price-output #estimated-price {
+  font-size: 4.5rem;
+  color: var(--gold-bright);
+  text-shadow: 0 0 30px rgba(197, 164, 78, 0.3);
+  letter-spacing: 2px;
+  transition: all 0.3s;
+}
+
+.price-output .suffix {
+  font-size: 1.5rem;
+  color: var(--gray);
+}
+
+.quote-details {
+  margin-bottom: 2rem;
+  text-align: left;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(51, 51, 51, 0.5);
+  color: var(--gray);
+}
+
+.quote-cta {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.price-disclaimer {
+  font-size: 0.65rem;
+  color: var(--gray-dark);
+  margin-top: 1.5rem;
+  font-style: italic;
+}
 
 /* Brands Ticker */
-.brands-ticker { background: #050505; padding: 3rem 0; border-top: 1px solid var(--gray-darker); border-bottom: 1px solid var(--gray-darker); overflow: hidden; }
-.brands-track { display: flex; align-items: center; gap: 5rem; width: max-content; animation: brandsScroll 40s linear infinite; }
-.brand-item { font-family: var(--font-display); font-size: 1.4rem; color: var(--gray-dark); letter-spacing: 4px; transition: 0.3s; }
-.brand-item:hover { color: var(--gold); transform: scale(1.1); text-shadow: 0 0 20px rgba(197, 164, 78, 0.5); }
-@keyframes brandsScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.brands-ticker {
+  background: #050505;
+  padding: 2rem 0;
+  border-top: 1px solid var(--gray-darker);
+  border-bottom: 1px solid var(--gray-darker);
+  overflow: hidden;
+  position: relative;
+}
+
+.brands-ticker::before,
+.brands-ticker::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 100px;
+  z-index: 2;
+}
+
+.brands-ticker::before {
+  left: 0;
+  background: linear-gradient(to right, #050505, transparent);
+}
+
+.brands-ticker::after {
+  right: 0;
+  background: linear-gradient(to left, #050505, transparent);
+}
+
+.brands-track {
+  display: flex;
+  align-items: center;
+  gap: 5rem;
+  width: max-content;
+  animation: brandsScroll 30s linear infinite;
+}
+
+.brand-item {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gray-dark);
+  letter-spacing: 4px;
+  white-space: nowrap;
+  transition: all 0.3s;
+  cursor: default;
+}
+
+.brand-item:hover {
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(197, 164, 78, 0.4);
+}
+
+@keyframes brandsScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
 
 /* RGB Tacho */
 .rgb-redline { animation: rgbFlicker 0.2s infinite alternate; filter: drop-shadow(0 0 10px #ff0000); }
 @keyframes rgbFlicker { 0% { stroke: #ff0000; } 33% { stroke: #00ff00; } 66% { stroke: #0000ff; } 100% { stroke: #ff0000; } }
 
+/* ============================================================
+   RESPONSIVE — PRICE ESTIMATOR & BRANDS
+   ============================================================ */
+@media (max-width: 768px) {
+  .estimator-grid { grid-template-columns: 1fr; }
+  .option-grid { grid-template-columns: 1fr 1fr; }
+  .price-output #estimated-price { font-size: 3rem; }
+  .estimator-display { padding: 2rem 1.5rem; }
+  .brand-item { font-size: 0.9rem; letter-spacing: 3px; }
+  .cyberpunk-card { position: relative; bottom: auto; right: auto; width: 100%; margin-top: 2rem; }
+}

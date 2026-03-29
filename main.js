@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 initCustomCursor();
                 initVectorParallax();
                 initFaq();
-                initTransformationSlider();
+                initPriceEstimator();
                 initMagneticButtons();
                 document.querySelector('.hero')?.classList.add('loaded');
                 flash.remove();
@@ -322,24 +322,62 @@ function initFaq() {
   });
 }
 
-// ---- TRANSFORMATION SLIDER ----
-function initTransformationSlider() {
-  const slider = document.getElementById('ba-slider');
-  const handle = document.getElementById('ba-handle');
-  const overlay = document.getElementById('ba-before');
-  if(!slider || !handle || !overlay) return;
-
-  const moveSlider = (e) => {
-    const rect = slider.getBoundingClientRect();
-    let x = ((e.clientX || (e.touches && e.touches[0].clientX)) - rect.left);
-    if (x < 0) x = 0; if (x > rect.width) x = rect.width;
-    const p = (x / rect.width) * 100;
-    handle.style.left = p + '%';
-    overlay.style.width = p + '%';
+// ---- PRICE ESTIMATOR ----
+function initPriceEstimator() {
+  const prices = {
+    hatchback: { ppf: '35,000', ceramic: '8,000', detailing: '3,500' },
+    sedan:     { ppf: '45,000', ceramic: '12,000', detailing: '5,000' },
+    suv:       { ppf: '65,000', ceramic: '18,000', detailing: '7,500' }
+  };
+  const durations = {
+    ppf: '3-5 Days', ceramic: '1-2 Days', detailing: '1 Day'
   };
 
-  slider.addEventListener('mousemove', moveSlider);
-  slider.addEventListener('touchmove', (e) => { moveSlider(e); }, {passive: false});
+  let selectedVehicle = 'hatchback';
+  let selectedService = 'ppf';
+
+  function updateQuote() {
+    const priceEl = document.getElementById('estimated-price');
+    const durEl = document.getElementById('quote-duration');
+    if (priceEl) priceEl.textContent = prices[selectedVehicle][selectedService];
+    if (durEl) durEl.textContent = durations[selectedService];
+  }
+
+  document.querySelectorAll('#vehicle-type .option-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#vehicle-type .option-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedVehicle = btn.dataset.value;
+      updateQuote();
+    });
+  });
+
+  document.querySelectorAll('#service-type .option-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#service-type .option-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedService = btn.dataset.value;
+      updateQuote();
+    });
+  });
+
+  // Expose sendQuoteWa globally
+  window.sendQuoteWa = function() {
+    const price = prices[selectedVehicle][selectedService];
+    const svc = selectedService.toUpperCase();
+    const veh = selectedVehicle.charAt(0).toUpperCase() + selectedVehicle.slice(1);
+    const msg = encodeURIComponent(
+      `🛡️ *Auto Palette — Quote Request*\n\n` +
+      `*Vehicle Type:* ${veh}\n` +
+      `*Service:* ${svc}\n` +
+      `*Estimated Price:* ₹${price}\n` +
+      `*Duration:* ${durations[selectedService]}\n\n` +
+      `I'd like to confirm this quote and book a slot.`
+    );
+    window.open('https://wa.me/918884471117?text=' + msg, '_blank');
+  };
+
+  updateQuote();
 }
 
 // ---- MAGNETIC BUTTONS ----
@@ -348,10 +386,13 @@ function initMagneticButtons() {
   btns.forEach(btn => {
     btn.addEventListener('mousemove', (e) => {
       const rect = btn.getBoundingClientRect();
-      const x = (e.clientX - rect.left - rect.width/2) * 0.35;
-      const y = (e.clientY - rect.top - rect.height/2) * 0.35;
+      const x = (e.clientX - rect.left - rect.width/2) * 0.25;
+      const y = (e.clientY - rect.top - rect.height/2) * 0.25;
       btn.style.transform = `translate(${x}px, ${y}px)`;
     });
-    btn.addEventListener('mouseleave', () => btn.style.transform = '');
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = '';
+      btn.style.transition = 'transform 0.4s var(--ease-spring)';
+    });
   });
 }

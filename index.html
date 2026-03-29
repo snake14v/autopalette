@@ -258,29 +258,49 @@
   </div>
 </section>
 
-<!-- TRANSFORMATION SLIDER -->
-<section class="transformation" id="transformation">
+<!-- SERVICE PRICE ESTIMATOR -->
+<section class="price-estimator" id="estimator">
   <div class="container">
     <div class="section-header reveal">
-      <div class="section-label glitch-text" data-text="◆ THE TRANSFORMATION ◆">◆ THE TRANSFORMATION ◆</div>
-      <h2 class="section-heading">WITNESS THE MAGIC</h2>
-      <p class="section-sub">From weary to worthy. Slide to reveal the Auto Palette difference.</p>
+      <div class="section-label neon-gold">[ SYSTEM_QUOTE_GENERATOR ]</div>
+      <h2 class="section-heading">ESTIMATE YOUR ARMOR</h2>
+      <p class="section-sub">Select your vehicle and service to generate a tactical estimate.</p>
     </div>
-    <div class="comparison-container reveal-scale">
-      <div class="before-after-slider" id="ba-slider">
-        <div class="img-after" style="background-image: url('/gallery_teaser.png');"></div>
-        <div class="img-before" id="ba-before" style="background-image: url('/gallery_teaser.png'); filter: grayscale(1) contrast(1.2) brightness(0.7) sepia(0.2) blur(1px);">
-          <div class="label-before">DIRTY / UNPROTECTED</div>
-        </div>
-        <div class="slider-handle" id="ba-handle">
-          <div class="handle-line"></div>
-          <div class="handle-circle">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    
+    <div class="estimator-grid reveal-scale">
+      <div class="estimator-controls">
+        <div class="control-group">
+          <label>VEHICLE CATEGORY</label>
+          <div class="option-grid" id="vehicle-type">
+            <button class="option-btn active" data-value="hatchback">HATCHBACK</button>
+            <button class="option-btn" data-value="sedan">SEDAN</button>
+            <button class="option-btn" data-value="suv">SUV / LUXURY</button>
           </div>
-          <div class="handle-line"></div>
         </div>
-        <div class="label-after">DETAILED & PPF ARMORED</div>
+        
+        <div class="control-group">
+          <label>SELECT PROTECTION</label>
+          <div class="option-grid" id="service-type">
+            <button class="option-btn active" data-value="ppf">PPF (ARMOR)</button>
+            <button class="option-btn" data-value="ceramic">CERAMIC (SHIELD)</button>
+            <button class="option-btn" data-value="detailing">DETAILING (PERFECTION)</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="estimator-display">
+        <div class="display-header">ESTIMATED VAULT QUOTE</div>
+        <div class="price-output">
+          <span class="currency">₹</span>
+          <span id="estimated-price">45,000</span>
+          <span class="suffix">*</span>
+        </div>
+        <div class="quote-details">
+          <div class="detail-row"><span>Status:</span> <span class="text-gold">AVAILABLE</span></div>
+          <div class="detail-row"><span>Estimated Duration:</span> <span id="quote-duration">3-4 Days</span></div>
+        </div>
+        <button class="btn-primary quote-cta" onclick="sendQuoteWa()">RESERVE SLOT VIA WHATSAPP</button>
+        <p class="price-disclaimer">*Final price depends on physical inspection and specific brand choice.</p>
       </div>
     </div>
   </div>
