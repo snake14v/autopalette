@@ -1754,7 +1754,12 @@ a, button, input, select, textarea, .wa-chip { cursor: none; }
 @media (max-width: 768px) {
   /* Ticker */
   .top-ticker { height: 30px; font-size: 0.6rem; }
-  .navbar { top: 30px; padding: 1rem 1.5rem; }
+  .navbar { 
+    top: 30px; 
+    padding: 1rem 1.5rem; 
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
   .navbar.scrolled { padding: 0.6rem 1.5rem; }
 
   /* Logo */
@@ -1766,8 +1771,8 @@ a, button, input, select, textarea, .wa-chip { cursor: none; }
   .nav-links {
     position: fixed;
     top: 0;
-    right: -100%;
-    width: 80%;
+    right: -100vw;
+    width: 80vw;
     height: 100vh;
     background: var(--bg-card);
     flex-direction: column;
@@ -1787,6 +1792,7 @@ a, button, input, select, textarea, .wa-chip { cursor: none; }
   .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
   /* Hero */
+  .hero { padding-top: 150px; }
   .hero-title { font-size: 3.5rem; }
   .hero-subtitle { font-size: 1rem; }
   .hero-cta-group { flex-direction: column; width: 100%; }
