@@ -1818,6 +1818,25 @@ a, button, input, select, textarea, .wa-chip { cursor: none; }
   .about-title, .section-heading { font-size: 2.8rem; }
   .offer-title { font-size: 4rem; }
   .offer-title .big-num { font-size: 7rem; }
+
+  /* Offer badge & CTA — prevent text clip on mobile */
+  .offer-badge {
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    padding: 0.4rem 1.2rem;
+  }
+  .offer-cta {
+    padding: 1rem 2rem;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    clip-path: none;
+    display: inline-block;
+    text-align: center;
+    width: auto;
+    max-width: 90vw;
+    word-break: keep-all;
+    white-space: nowrap;
+  }
   
   /* WhatsApp Modal */
   .wa-modal { width: 95%; padding: 1rem; }
@@ -1829,6 +1848,19 @@ a, button, input, select, textarea, .wa-chip { cursor: none; }
   .hero-title { font-size: 2.8rem; }
   .gate-counter { font-size: 2.5rem; }
   .gate-logo { width: 140px; }
+
+  /* Offer section — very small phones */
+  .offer-title .big-num { font-size: 5rem; }
+  .offer-badge {
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+    padding: 0.3rem 1rem;
+  }
+  .offer-cta {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.6rem;
+    letter-spacing: 1px;
+  }
 }
 
 /* ============================================================
