@@ -130,8 +130,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   height: auto;
   width: 200px;
   margin-bottom: 2rem;
-  mix-blend-mode: screen;
-  filter: invert(1) grayscale(1) contrast(1.5) brightness(1.1) drop-shadow(0 0 20px rgba(197, 164, 78, 0.4));
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
   transition: var(--transition);
 }
 .tacho-wrapper {
@@ -362,15 +361,14 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
   height: 100px;
   width: auto;
   object-fit: contain;
-  mix-blend-mode: screen;
-  filter: invert(1) grayscale(1) contrast(1.5) brightness(1.1) drop-shadow(0 0 15px rgba(197, 164, 78, 0.3));
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
   transition: var(--transition);
 }
 .navbar.scrolled .logo-img {
   height: 70px;
 }
 .logo-img:hover {
-  filter: invert(1) grayscale(1) contrast(1.5) brightness(1.3) drop-shadow(0 0 20px rgba(197, 164, 78, 0.4));
+  filter: drop-shadow(0 0 25px rgba(255, 255, 255, 0.5));
   transform: scale(1.05);
 }
 
@@ -1659,8 +1657,7 @@ select.form-control {
 .footer-logo-img {
   height: 120px;
   width: auto;
-  mix-blend-mode: screen;
-  filter: invert(1) grayscale(1) contrast(1.5) brightness(1.1) drop-shadow(0 0 20px rgba(197, 164, 78, 0.2));
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
   margin-bottom: 1.5rem;
 }
 
