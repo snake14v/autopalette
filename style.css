@@ -1769,21 +1769,31 @@ a, button, input, select, textarea, .wa-chip { cursor: none; }
   /* Navigation Mobile Menu */
   .hamburger { display: flex; }
   .nav-links {
-    position: fixed;
-    top: 0;
-    right: -100vw;
-    width: 80vw;
-    height: 100vh;
-    background: var(--bg-card);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     flex-direction: column;
-    justify-content: center;
-    gap: 3rem;
-    padding: 2rem;
-    transition: 0.5s var(--ease-out);
-    box-shadow: -10px 0 50px rgba(0,0,0,0.9);
-    z-index: 1000;
+    justify-content: flex-start;
+    gap: 2rem;
+    padding: 2rem 1.5rem 3rem 1.5rem;
+    transition: 0.4s var(--ease-out);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.9);
+    transform: translateY(-20px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
   }
-  .nav-links.open { right: 0; }
+  .nav-links.open { 
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
   .nav-link { font-size: 1rem; letter-spacing: 4px; }
   
   /* Hamburger Anim */

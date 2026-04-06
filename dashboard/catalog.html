@@ -1,0 +1,280 @@
+<!-- Service Catalog -->
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Service Catalog | AUTO PALETTE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&amp;family=Space+Grotesk:wght@300;400;500;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#66ff8e",
+                        "surface-container-low": "#1b1b1b",
+                        "secondary-container": "#00cdd0",
+                        "on-primary-fixed": "#221b00",
+                        "on-secondary-container": "#005253",
+                        "tertiary-fixed-dim": "#3de273",
+                        "secondary": "#46eaed",
+                        "outline-variant": "#4d4732",
+                        "secondary-fixed-dim": "#2ddbde",
+                        "primary-fixed": "#ffe16d",
+                        "on-secondary-fixed": "#002020",
+                        "tertiary-container": "#56f684",
+                        "outline": "#999077",
+                        "primary-container": "#ffd700",
+                        "tertiary": "#dcffdc",
+                        "on-surface-variant": "#d0c6ab",
+                        "on-primary": "#3a3000",
+                        "background": "#131313",
+                        "surface-tint": "#e9c400",
+                        "inverse-on-surface": "#303030",
+                        "surface-container-highest": "#353535",
+                        "surface-dim": "#131313",
+                        "surface-bright": "#393939",
+                        "on-secondary-fixed-variant": "#004f51",
+                        "on-tertiary-fixed-variant": "#005322",
+                        "on-primary-fixed-variant": "#544600",
+                        "on-error": "#690005",
+                        "inverse-surface": "#e2e2e2",
+                        "on-secondary": "#003738",
+                        "on-tertiary": "#003915",
+                        "surface": "#131313",
+                        "surface-variant": "#353535",
+                        "surface-container-lowest": "#0e0e0e",
+                        "secondary-fixed": "#5af8fb",
+                        "on-background": "#e2e2e2",
+                        "error": "#ffb4ab",
+                        "on-tertiary-container": "#006e2f",
+                        "on-surface": "#e2e2e2",
+                        "primary": "#fff6df",
+                        "surface-container": "#1f1f1f",
+                        "on-tertiary-fixed": "#002109",
+                        "on-primary-container": "#705e00",
+                        "primary-fixed-dim": "#e9c400",
+                        "surface-container-high": "#2a2a2a",
+                        "inverse-primary": "#705d00",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Orbitron", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"],
+                        "tech": ["Space Grotesk", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(19, 19, 19, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        .carbon-pattern {
+            background-image: radial-gradient(#ffffff05 1px, transparent 0);
+            background-size: 10px 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body selection:bg-primary-container selection:text-on-primary-container overflow-x-hidden">
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 w-full flex justify-between items-center px-6 h-16 bg-[#131313]/80 backdrop-blur-xl border-b border-[#46EAED]/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] z-50">
+<div class="flex items-center gap-4">
+<a href="/"><span class="material-symbols-outlined text-[#FFD700] cursor-pointer hover:text-[#46EAED] transition-colors active:scale-95">arrow_back</span></a>
+<h1 class="text-xl font-black tracking-widest text-[#FFD700] font-headline uppercase">AUTO PALETTE</h1>
+</div>
+<div class="hidden md:flex items-center gap-8 font-tech text-xs tracking-[0.2em] font-bold">
+<a class="text-gray-400 hover:text-[#46EAED] transition-colors uppercase" href="index.html">DASHBOARD</a>
+<a class="text-[#FFD700] hover:text-[#46EAED] transition-colors uppercase" href="catalog.html">SERVICES</a>
+<a class="text-gray-400 hover:text-[#46EAED] transition-colors uppercase" href="booking.html">BOOKING</a>
+<a class="text-gray-400 hover:text-[#46EAED] transition-colors uppercase" href="progress.html">PROGRESS</a>
+<a class="text-gray-400 hover:text-[#46EAED] transition-colors uppercase" href="garage.html">GARAGE</a>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full border border-[#46EAED]/30 overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="close-up portrait of a professional driver wearing a sleek carbon fiber racing helmet with subtle gold visor reflections" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyGKeO3MGsj1H7DUNEe_MGwZiWWkS6NITUJJpGUaTfFgKm1ulFgbfOlzk9sjTnvJB2bPXi8coQHtluVl4BQUd34cgN2zPf9T_8HrtKqjFBPltExKTY1aBTed1zbYXkAkWNQMou6jzo49-20eWuVLov3my-h6eHgNFi0ZzoSjro303HRYd6w19dwAZnzbIgaX5MLiont6Ej9bkDcyO57nlq6g40bp4GvMSH6eSmnBJlpqvyVlKXE4hG4LJriX_wQnv5jFubTuuSifA"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto carbon-pattern">
+<!-- Hero Editorial Section -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-8 mb-24 items-end">
+<div class="md:col-span-7">
+<span class="font-tech text-[#46EAED] uppercase tracking-[0.3em] text-sm block mb-4">ENGINEERED AESTHETICS</span>
+<h2 class="font-headline text-5xl md:text-7xl font-black tracking-tighter leading-none mb-6">SERVICE <br/><span class="text-[#FFD700]">CATALOG</span></h2>
+<p class="font-tech text-on-surface-variant max-w-lg leading-relaxed text-lg">Precision maintenance for the elite automotive enthusiast. Every service is a dialogue between state-of-the-art telemetry and artisanal craftsmanship.</p>
+</div>
+<div class="md:col-span-5 relative">
+<div class="aspect-[4/5] rounded-lg overflow-hidden border border-outline-variant/20 shadow-2xl">
+<img alt="Hero Detail" class="w-full h-full object-cover" data-alt="dramatic macro shot of a black supercar body line at night with sharp neon cyan lighting reflections on the metallic surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiTjbxdZYHx5eyzfrdUg8ZPy8ted876niHzZiRBJuKRU72LG2el3Y5v1Fvmzp2Y4_ASzNtF-Iv-CuGmpMcQFk18kk0o8B0pNIkaEbQRbVwbYfC0LaNY68cWPgThgIgrzCiQFNM53EubffhYoVoPdEvauJs5LYNOf9qqQN-JNT6uD12Gmof1lvzPkZ2_wkKblY2ZKEWuWOZoIvvgbZyA318nOGTXXyYy0TOgjvuWr43HYc3tTvQ6FPvz-5Mq1P_lmQAkWeybYs47yU"/>
+</div>
+<div class="absolute -bottom-6 -left-6 glass-panel p-6 border border-secondary/20 shadow-[0_20px_50px_rgba(0,205,208,0.08)] hidden md:block">
+<span class="font-headline text-[#FFD700] text-3xl font-black italic">TOP TIER</span>
+</div>
+</div>
+</section>
+<!-- Bento Grid Services -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Ceramic Coating Card (Large Impact) -->
+<div class="md:col-span-2 group relative overflow-hidden bg-surface-container-low rounded-lg border border-transparent hover:border-[#FFD700]/30 transition-all duration-500">
+<div class="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity">
+<img alt="Ceramic Coating" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="extreme close-up of water beading on a perfectly polished ceramic coated car hood showing microscopic surface tension" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxG443MkNpjG-kw-ckYHAZG1kinMf_Ix2TnQrrMXnPvouQbyon3qnOJmqaP8Y_5ioiZuDG1A6DspBfB_YwVHTS83OOIpUITVDpmQCs7kbKukVASOuowM-N9qVxYbwZdbKIbOo1wDYdzaUb7Ox2hpaIFxaFZFNGWkQjEq4jsR0XaQ9-RCPeN47MevO3FpU1_HYp9nlXjbXqc-c3_nZGnLxFUDmDhq8SdJuXNsFYfgHaUGXiXL0fBoXfsA7HlbwOq955Q0jZ3N7WZSk"/>
+</div>
+<div class="relative p-10 h-full flex flex-col justify-end bg-gradient-to-t from-background via-background/40 to-transparent min-h-[400px]">
+<div class="flex justify-between items-end">
+<div>
+<span class="font-tech text-[#46EAED] uppercase tracking-widest text-xs mb-2 block">CATEGORY: COATING</span>
+<h3 class="font-headline text-4xl font-bold mb-4 uppercase">Ceramic Coating</h3>
+<p class="font-body text-on-surface-variant max-w-md mb-6 leading-snug">9H Nano-technology creating a permanent molecular bond. Shielding against environmental contaminants with diamond-grade gloss.</p>
+<div class="flex items-center gap-6">
+<span class="font-tech text-primary-container font-black text-2xl uppercase">EST. $1,200+</span>
+<button class="bg-primary-container text-on-primary-fixed px-8 py-3 font-tech font-bold text-xs tracking-widest hover:bg-secondary transition-all active:scale-95 uppercase" onclick="window.location.href='booking.html'">BOOK SERVICE</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Paint Protection Film Card -->
+<div class="bg-surface-container-high rounded-lg p-8 flex flex-col justify-between border border-outline-variant/10 group hover:border-[#46EAED]/30 transition-all">
+<div>
+<div class="w-full aspect-video rounded overflow-hidden mb-6">
+<img alt="PPF Application" class="w-full h-full object-cover" data-alt="technician carefully applying a clear protective film to a silver sports car bumper using a squeegee and heat gun" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVln3XaUaXE-ML5nXq2Wb_iu-nZX-Ifyr6RLY-iCekm-zMxDZBf7lE5rb0AdhJI8j1RWjAfCsnfk5RYEt2cJ1Z2vRJQsF9fGYRTDTATSesKgeje8Y8-D6KDmmz_bXVvBre6xXgBPKOvB1wCLkAaEoQh3KnxeOooToq4PbD3a98p2TfpOaS1h8MCYEwZYs7_-6iCX5c44ljxF0b8yzw4ZVtE4JAkhydOQkYzbAKSTBgBxroSxGtvgO4-VOcMhdVeILkewRd54OSp60"/>
+</div>
+<span class="font-tech text-secondary uppercase tracking-widest text-[10px] mb-2 block">CATEGORY: SHIELD</span>
+<h3 class="font-headline text-2xl font-bold mb-3 uppercase">PPF (Clear Bra)</h3>
+<p class="font-body text-on-surface-variant text-sm leading-relaxed mb-6 italic">Self-healing urethane barrier against rock chips and abrasions. Invisible precision for high-velocity protection.</p>
+</div>
+<div class="flex justify-between items-center pt-6 border-t border-outline-variant/20">
+<span class="font-tech text-on-surface font-bold">FROM $2,400</span>
+<button class="text-[#46EAED] font-tech font-black text-xs tracking-widest hover:text-[#FFD700] transition-colors uppercase" onclick="window.location.href='booking.html'">EXPLORE</button>
+</div>
+</div>
+<!-- Paint Correction Card -->
+<div class="bg-surface-container-low rounded-lg p-8 flex flex-col justify-between border border-outline-variant/10 group hover:border-[#FFD700]/30 transition-all">
+<div>
+<div class="w-full aspect-video rounded overflow-hidden mb-6">
+<img alt="Paint Correction" class="w-full h-full object-cover" data-alt="macro shot of dual action polisher on dark paint with bright light showing before and after swirl mark removal" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7AtwwE5buAfNp9Ptk5Kv3uVEe0Hnb2xl7fI91cOnBrZiLDzZT9ziiWHpjMS-QEtnDZvkuQv_fbv0b_H3VKMgLO0GSBlg6_-hI8DtCpRFkRAfxtCqcgo4EdbR1spaplYx95ociJ4NI0ORyemkujkSvcLm6hb7haSG5lduZUD19elVigUtTMZq2XXQ9pZaB3KWObXqyWfZYUixE49GHyjgPoLxBla2hjeUOZuc3H-_CrW8HzWlcmfj3QIhTk7czgkJkgaCgco6Pmog"/>
+</div>
+<span class="font-tech text-primary-container uppercase tracking-widest text-[10px] mb-2 block">CATEGORY: RESTORE</span>
+<h3 class="font-headline text-2xl font-bold mb-3 uppercase">Paint Correction</h3>
+<p class="font-body text-on-surface-variant text-sm leading-relaxed mb-6 italic">Multi-stage abrasive leveling to remove swirl marks and oxidation. Restoring depth and clarity to showroom standards.</p>
+</div>
+<div class="flex justify-between items-center pt-6 border-t border-outline-variant/20">
+<span class="font-tech text-on-surface font-bold">FROM $850</span>
+<button class="text-[#46EAED] font-tech font-black text-xs tracking-widest hover:text-[#FFD700] transition-colors uppercase" onclick="window.location.href='booking.html'">EXPLORE</button>
+</div>
+</div>
+<!-- Interior Detailing Card -->
+<div class="md:col-span-2 bg-surface-container-low rounded-lg overflow-hidden border border-outline-variant/10 group hover:border-secondary/30 transition-all">
+<div class="grid grid-cols-1 md:grid-cols-2">
+<div class="h-full">
+<img alt="Interior Detailing" class="w-full h-full object-cover" data-alt="luxury car interior with red perforated leather seats and carbon fiber trim detailing illuminated by soft atmospheric lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoikBSPPj0CRVU0iz7oIeEU-d5wPyF_6GuEjhE2ghsHtUnu6U8i_eOSUWHUKO-lWWRROu48UJcd0y_kJpPllunYQwgHxhXKgz9YlWLEFb3cj_6cl9MJ06qZxRA9w65WMIOLtGB5vlvygiJGCB4-SsREgrUfw-35-rOnBEjkQP3ynHyKd9kF5FyzA_iAmxHnbuu13o1NiJjVxi332vOrodb0sdCXC0udhsSPsh5sK0H3t_aJKQ7nmdemaHISDCBCZyXElZnFL_d2sk"/>
+</div>
+<div class="p-10 flex flex-col justify-center">
+<span class="font-tech text-[#46EAED] uppercase tracking-widest text-xs mb-2 block">CATEGORY: COCKPIT</span>
+<h3 class="font-headline text-3xl font-bold mb-4 uppercase">Interior Detailing</h3>
+<p class="font-body text-on-surface-variant mb-8 leading-relaxed">Steam extraction, pH-balanced leather conditioning, and micro-brush decontamination. Every crevice, every stitch, perfectly curated.</p>
+<div class="flex items-center justify-between">
+<span class="font-tech text-on-surface font-bold text-xl uppercase">EST. $450</span>
+<button class="bg-surface-container-highest text-[#46EAED] px-8 py-3 border border-secondary/20 font-tech font-bold text-xs tracking-widest hover:bg-secondary hover:text-on-secondary transition-all active:scale-95 uppercase" onclick="window.location.href='booking.html'">BOOK NOW</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Maintenance Detail Card -->
+<div class="bg-surface-container-lowest rounded-lg p-8 flex flex-col justify-between border border-outline-variant/10 group hover:border-[#46EAED]/30 transition-all relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4">
+<span class="material-symbols-outlined text-[#46EAED]/20 text-6xl rotate-12">speed</span>
+</div>
+<div class="relative">
+<span class="font-tech text-on-surface-variant uppercase tracking-widest text-[10px] mb-2 block">CATEGORY: SUSTAIN</span>
+<h3 class="font-headline text-2xl font-bold mb-3 uppercase">Signature Wash</h3>
+<p class="font-body text-on-surface-variant text-sm leading-relaxed mb-6 italic">Non-contact de-ionization and hand-wash using premium polymer shampoos. Maintenance for the meticulous owner.</p>
+</div>
+<div class="flex justify-between items-center pt-6 border-t border-outline-variant/20 relative">
+<span class="font-tech text-on-surface font-bold">FROM $150</span>
+<button class="text-[#FFD700] font-tech font-black text-xs tracking-widest hover:text-[#46EAED] transition-colors uppercase" onclick="window.location.href='booking.html'">BOOK</button>
+</div>
+</div>
+</div>
+<!-- Technical Specification Section (Asymmetric) -->
+<section class="mt-32 grid grid-cols-1 md:grid-cols-3 gap-12 items-center">
+<div class="order-2 md:order-1">
+<div class="space-y-12">
+<div>
+<div class="flex items-center gap-4 mb-2">
+<span class="w-12 h-[2px] bg-[#FFD700]"></span>
+<h4 class="font-tech text-[#FFD700] font-bold tracking-[0.2em] uppercase text-xs">PRECISION TOOLS</h4>
+</div>
+<p class="text-on-surface-variant text-sm leading-relaxed">We utilize exclusively RUPES® and FLEX® polishing systems coupled with laboratory-grade inspection lighting.</p>
+</div>
+<div>
+<div class="flex items-center gap-4 mb-2">
+<span class="w-12 h-[2px] bg-[#46EAED]"></span>
+<h4 class="font-tech text-[#46EAED] font-bold tracking-[0.2em] uppercase text-xs">CLIMATE CONTROL</h4>
+</div>
+<p class="text-on-surface-variant text-sm leading-relaxed">All coatings applied in a hospital-grade dust-free environment with 21°C constant temperature and 45% humidity.</p>
+</div>
+</div>
+</div>
+<div class="md:col-span-2 order-1 md:order-2">
+<div class="relative">
+<div class="aspect-video bg-surface-container rounded-lg overflow-hidden border border-[#46EAED]/10">
+<img alt="Laboratory detailing" class="w-full h-full object-cover" data-alt="clean high-tech automotive detailing bay with bright overhead clinical lights and a sleek grey car under inspection" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9qswlMg1r4AOiMeLhv1weT1dheJ163YQnh8sx1i5c5HbLt9b39wu59B-IRHCkVDErTxMcXs8NUFfxTWp1HgxLJbdakH454DJLj2sgce8H56OU9pSr2fhGIXB_25FxEarBqyn70Ev-o0Q5P3SHdUQNmGkuoELW3njMsOBqenUmoa2hAiCvJ8tGs4SjmxWrUOnKB7WuN8NY25Vyx8747rILAtgDvsoXXtfuWmYKCTRsVyv1mnxOTdMItdG6XJQzf4TdQBFbY9NHiiM"/>
+</div>
+<div class="absolute -top-4 -right-4 glass-panel px-6 py-4 border border-[#FFD700]/20 flex items-center gap-4">
+<div class="flex flex-col">
+<span class="font-tech text-[10px] text-gray-400 uppercase tracking-widest">CURRENT CAPACITY</span>
+<span class="font-headline text-[#FFD700] text-xl font-black">94% PERFORMANCE</span>
+</div>
+<span class="material-symbols-outlined text-[#46EAED]">verified</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Shell (Mobile Only) -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-[#131313]/90 backdrop-blur-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] rounded-t-xl text-center md:hidden">
+<a href="index.html" class="flex flex-col items-center justify-center text-gray-500 py-1 px-3 hover:text-[#46EAED] transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined text-2xl">dashboard</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">DASHBOARD</span>
+</a>
+<a href="catalog.html" class="flex flex-col items-center justify-center text-[#FFD700] bg-[#FFD700]/10 rounded-xl py-1 px-3 shadow-[0_0_15px_rgba(255,215,0,0.2)] active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined text-2xl">build_circle</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">SERVICES</span>
+</a>
+<a href="booking.html" class="flex flex-col items-center justify-center text-gray-500 py-1 px-3 hover:text-[#46EAED] transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined text-2xl">calendar_add_on</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">BOOKING</span>
+</a>
+<a href="progress.html" class="flex flex-col items-center justify-center text-gray-500 py-1 px-3 hover:text-[#46EAED] transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined text-2xl">speed</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">PROGRESS</span>
+</a>
+<a href="garage.html" class="flex flex-col items-center justify-center text-gray-500 py-1 px-3 hover:text-[#46EAED] transition-all active:scale-90 duration-200">
+<span class="material-symbols-outlined text-2xl">directions_car</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">GARAGE</span>
+</a>
+</nav>
+</body></html>

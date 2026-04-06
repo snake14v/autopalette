@@ -1,0 +1,295 @@
+<!-- My Garage -->
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Garage | AUTO PALETTE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;family=Space+Grotesk:wght@300;400;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#66ff8e",
+                        "surface-container-low": "#1b1b1b",
+                        "secondary-container": "#00cdd0",
+                        "on-primary-fixed": "#221b00",
+                        "on-secondary-container": "#005253",
+                        "tertiary-fixed-dim": "#3de273",
+                        "secondary": "#46eaed",
+                        "outline-variant": "#4d4732",
+                        "secondary-fixed-dim": "#2ddbde",
+                        "primary-fixed": "#ffe16d",
+                        "on-secondary-fixed": "#002020",
+                        "tertiary-container": "#56f684",
+                        "outline": "#999077",
+                        "primary-container": "#ffd700",
+                        "tertiary": "#dcffdc",
+                        "on-surface-variant": "#d0c6ab",
+                        "on-primary": "#3a3000",
+                        "background": "#131313",
+                        "surface-tint": "#e9c400",
+                        "inverse-on-surface": "#303030",
+                        "surface-container-highest": "#353535",
+                        "surface-dim": "#131313",
+                        "surface-bright": "#393939",
+                        "on-secondary-fixed-variant": "#004f51",
+                        "on-tertiary-fixed-variant": "#005322",
+                        "on-primary-fixed-variant": "#544600",
+                        "on-error": "#690005",
+                        "inverse-surface": "#e2e2e2",
+                        "on-secondary": "#003738",
+                        "on-tertiary": "#003915",
+                        "surface": "#131313",
+                        "surface-variant": "#353535",
+                        "surface-container-lowest": "#0e0e0e",
+                        "secondary-fixed": "#5af8fb",
+                        "on-background": "#e2e2e2",
+                        "error": "#ffb4ab",
+                        "on-tertiary-container": "#006e2f",
+                        "on-surface": "#e2e2e2",
+                        "primary": "#fff6df",
+                        "surface-container": "#1f1f1f",
+                        "on-tertiary-fixed": "#002109",
+                        "on-primary-container": "#705e00",
+                        "primary-fixed-dim": "#e9c400",
+                        "surface-container-high": "#2a2a2a",
+                        "inverse-primary": "#705d00",
+                        "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Orbitron", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Space Grotesk", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(31, 31, 31, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        .carbon-pattern {
+            background-image: radial-gradient(#222 0.5px, transparent 0.5px);
+            background-size: 4px 4px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body min-h-screen selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full flex justify-between items-center px-6 h-16 bg-[#131313]/80 backdrop-blur-xl border-b border-[#46EAED]/10 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+<div class="flex items-center gap-4">
+<a href="/"><span class="material-symbols-outlined text-[#FFD700] active:scale-95 transition-transform cursor-pointer">arrow_back</span></a>
+<h1 class="text-xl font-black tracking-widest text-[#FFD700] font-['Orbitron']">AUTO PALETTE</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-8 font-['Space_Grotesk'] text-[12px] tracking-[0.2em] font-bold">
+<a class="text-gray-400 hover:text-[#46EAED] transition-colors duration-300" href="index.html">DASHBOARD</a>
+<a class="text-gray-400 hover:text-[#46EAED] transition-colors duration-300" href="catalog.html">SERVICES</a>
+<a class="text-[#FFD700]" href="garage.html">GARAGE</a>
+</nav>
+<div class="w-10 h-10 rounded-full border border-[#FFD700]/30 overflow-hidden bg-surface-container-highest">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="professional male driver profile portrait with modern tech lighting and dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMW4lkXRw1kD7a972rv_YGfr82XZc0wroFpK23lOsXRPEDnx-reKYPehhz_pG4i8zN6A4Rst2V_GAoII6P2gHwzT3rNQ6udGxnJMY81XD-mqY0evONF2jrtE6xLzIhCh1fLwk1LUDrbq7KiGY0Rn7SjxJ9uxozxKvoR6rRO4n0MHmaiSAtzjjgFvRoXpknEr-DWzS0r7t4ZhnuckEY4zXFOTnCJj4ZEtWbhgKZZOw-9TgpQtu16VMsHEjfV-LyUGhiNSDTtBsFGQ8"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Hero Section / Status -->
+<section class="mb-12 flex flex-col md:flex-row justify-between items-end gap-8 border-l-4 border-primary-container pl-6">
+<div class="space-y-2">
+<p class="font-label text-primary-container tracking-[0.2em] text-xs uppercase font-bold">WELCOME BACK, COMMANDER</p>
+<h2 class="font-headline text-4xl md:text-6xl font-black tracking-tighter uppercase">MY GARAGE</h2>
+</div>
+<div class="glass-panel p-6 rounded-lg border border-outline-variant/20 flex items-center gap-6 shadow-[0_0_50px_rgba(255,215,0,0.05)]">
+<div class="relative w-16 h-16 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full -rotate-90">
+<circle class="text-surface-container-highest" cx="32" cy="32" fill="none" r="30" stroke="currentColor" stroke-width="2"></circle>
+<circle class="text-primary-container" cx="32" cy="32" fill="none" r="30" stroke="currentColor" stroke-dasharray="188.5" stroke-dashoffset="47" stroke-width="2"></circle>
+</svg>
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div>
+<h3 class="font-headline text-lg text-primary-container leading-none">PRECISION MEMBER</h3>
+<p class="font-label text-[10px] tracking-widest text-secondary uppercase mt-1">Tier 1 • 850 Points to Next Level</p>
+</div>
+</div>
+</section>
+<!-- Vehicle Grid (Asymmetric Editorial Layout) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
+<!-- Main Vehicle Card -->
+<div class="lg:col-span-8 group relative overflow-hidden rounded-xl bg-surface-container-low border border-outline-variant/10">
+<div class="absolute inset-0 carbon-pattern opacity-10"></div>
+<div class="relative h-[400px] overflow-hidden">
+<img alt="Porsche 911" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="silver Porsche 911 parked in a minimalist modern concrete garage with dramatic overhead cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXFOl5d2lEMCtBiEYuIwOSe0b21L2lxn9l9wcSNO_xGUMRra9GoOrSkmJo_J7wGezw7mjFtHuG2vBrgW-iLaPCNuoSl0lYRoijxu6AJkMkL9PfAZaL-KK9RG2ltia5CMKmOh5RQXy3ascfUW9aotLUVDD6Soln_FF_Sd9PCKiMMnbG7IIngJbDn4TVWnlCWHG7x_bs7PiLKv8b8WWqmHkvF4BbtOIbSy5k4Czepfatrm3ilnFbZf4nepgX7yI3Y-KuUtcuI82ubBI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+<div class="absolute bottom-8 left-8">
+<span class="bg-secondary/20 text-secondary text-[10px] font-bold px-3 py-1 rounded-full mb-3 inline-block font-label tracking-widest">PRIMARY VEHICLE</span>
+<h3 class="font-headline text-3xl font-black text-white">2023 PORSCHE 911</h3>
+<p class="text-secondary/80 font-label text-sm tracking-wide mt-1">VIN: WP0AA2A94NS2XXXXX</p>
+</div>
+</div>
+<div class="p-8 grid grid-cols-2 md:grid-cols-4 gap-6 bg-surface-container-low">
+<div>
+<p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1 font-label">MILEAGE</p>
+<p class="font-headline text-xl">4,240 <span class="text-xs text-gray-500">KM</span></p>
+</div>
+<div>
+<p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1 font-label">FUEL RANGE</p>
+<p class="font-headline text-xl">320 <span class="text-xs text-gray-500">KM</span></p>
+</div>
+<div>
+<p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1 font-label">NEXT SERVICE</p>
+<p class="font-headline text-xl text-secondary">25D</p>
+</div>
+<div class="flex items-end">
+<button class="w-full py-2 bg-primary-container text-on-primary-fixed font-bold font-label text-[10px] tracking-widest hover:bg-primary-fixed-dim transition-colors active:scale-95">MANAGE SPECS</button>
+</div>
+</div>
+</div>
+<!-- Secondary Vehicle & Add Button -->
+<div class="lg:col-span-4 flex flex-col gap-8">
+<!-- Secondary Vehicle Card -->
+<div class="flex-1 rounded-xl bg-surface-container border border-outline-variant/10 overflow-hidden group">
+<div class="h-48 overflow-hidden">
+<img alt="Range Rover" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="luxury black Range Rover parked on a sleek dark asphalt road during twilight with city lights blurred behind" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaFGBGLrsAfIaUVGyF1ip3Bry9R3yig2184AC0Y7zs-d7f8odU5U6jzlsdPtKC8aUPmlC5BXw0-gjg-xb90hGiLLV1dqTkxGcHXxW168vGSAjfFEKWNmsGCO7UI3pBRbdHQiUrro2NgTeE9ndHU26vGN0db7scF1D5IZVDUxhgSbnOxrI7hvaWxrQywcdLayI2vRs-TcBGEueQOy5DPZs17K6flsJhRJfqyqovvbZIUaPFRsVijYnWmamW1pSP48wHL0SxaE3wqNo"/>
+</div>
+<div class="p-6">
+<h3 class="font-headline text-lg font-bold">2022 RANGE ROVER</h3>
+<div class="flex justify-between items-center mt-4">
+<span class="text-[10px] font-label text-gray-500 tracking-widest">STATUS: SECURE</span>
+<span class="material-symbols-outlined text-secondary text-sm">battery_full</span>
+</div>
+</div>
+</div>
+<!-- Add New Vehicle Button -->
+<button class="group flex flex-col items-center justify-center gap-4 p-8 rounded-xl border-2 border-dashed border-outline-variant/30 hover:border-primary-container/50 hover:bg-primary-container/5 transition-all duration-300">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:bg-primary-container group-hover:text-on-primary-fixed transition-colors">
+<span class="material-symbols-outlined">add</span>
+</div>
+<span class="font-label text-xs font-bold tracking-[0.2em] text-gray-400 group-hover:text-primary-container">ADD NEW VEHICLE</span>
+</button>
+</div>
+</div>
+<!-- Service History (Technical Data Aesthetics) -->
+<section>
+<div class="flex items-center justify-between mb-8">
+<h2 class="font-headline text-2xl tracking-tight uppercase flex items-center gap-4">
+<span class="w-8 h-[2px] bg-secondary"></span>
+                    SERVICE HISTORY
+                </h2>
+<button class="font-label text-[10px] tracking-widest text-secondary hover:underline">EXPORT ALL LOGS</button>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 overflow-hidden">
+<table class="w-full text-left font-body">
+<thead class="bg-surface-container-high/50 text-[10px] font-label tracking-[0.2em] text-gray-400">
+<tr>
+<th class="px-8 py-4 uppercase">Date</th>
+<th class="px-8 py-4 uppercase">Vehicle</th>
+<th class="px-8 py-4 uppercase">Service Type</th>
+<th class="px-8 py-4 uppercase">Status</th>
+<th class="px-8 py-4 text-right uppercase">Invoice</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10 text-sm">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-medium">OCT 14, 2023</td>
+<td class="px-8 py-6 text-gray-400">Porsche 911</td>
+<td class="px-8 py-6">Performance Alignment &amp; Fluids</td>
+<td class="px-8 py-6">
+<span class="flex items-center gap-2 text-tertiary-fixed text-[10px] font-bold font-label uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed"></span>
+                                    Completed
+                                </span>
+</td>
+<td class="px-8 py-6 text-right">
+<a class="inline-flex items-center gap-2 text-secondary hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-base">description</span>
+<span class="font-label text-[10px] tracking-widest font-bold">INV-9921</span>
+</a>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-medium">AUG 22, 2023</td>
+<td class="px-8 py-6 text-gray-400">Range Rover</td>
+<td class="px-8 py-6">Annual Inspection &amp; Filter Change</td>
+<td class="px-8 py-6">
+<span class="flex items-center gap-2 text-tertiary-fixed text-[10px] font-bold font-label uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed"></span>
+                                    Completed
+                                </span>
+</td>
+<td class="px-8 py-6 text-right">
+<a class="inline-flex items-center gap-2 text-secondary hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-base">description</span>
+<span class="font-label text-[10px] tracking-widest font-bold">INV-8742</span>
+</a>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-medium">JUN 05, 2023</td>
+<td class="px-8 py-6 text-gray-400">Porsche 911</td>
+<td class="px-8 py-6">Ceramic Coating Renewal</td>
+<td class="px-8 py-6">
+<span class="flex items-center gap-2 text-tertiary-fixed text-[10px] font-bold font-label uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed"></span>
+                                    Completed
+                                </span>
+</td>
+<td class="px-8 py-6 text-right">
+<a class="inline-flex items-center gap-2 text-secondary hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-base">description</span>
+<span class="font-label text-[10px] tracking-widest font-bold">INV-7731</span>
+</a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-[#131313]/90 backdrop-blur-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] rounded-t-xl text-center">
+<a href="index.html" class="flex flex-col items-center justify-center text-gray-500 py-1 px-3 hover:text-[#46EAED] active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined text-2xl">dashboard</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">DASHBOARD</span>
+</a>
+<a href="catalog.html" class="flex flex-col items-center justify-center text-gray-500 py-1 px-3 hover:text-[#46EAED] active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined text-2xl">build_circle</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">SERVICES</span>
+</a>
+<a href="booking.html" class="flex flex-col items-center justify-center text-gray-500 py-1 px-3 hover:text-[#46EAED] active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined text-2xl">calendar_add_on</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">BOOKING</span>
+</a>
+<a href="progress.html" class="flex flex-col items-center justify-center text-gray-500 py-1 px-3 hover:text-[#46EAED] active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined text-2xl">speed</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">PROGRESS</span>
+</a>
+<a href="garage.html" class="flex flex-col items-center justify-center text-[#FFD700] bg-[#FFD700]/10 rounded-xl py-1 px-3 shadow-[0_0_15px_rgba(255,215,0,0.2)] active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">directions_car</span>
+<span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1">GARAGE</span>
+</a>
+</nav>
+</body></html>
