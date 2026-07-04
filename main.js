@@ -241,6 +241,8 @@ document.addEventListener('mouseleave', (e) => {
 
 // ---- CUSTOM CURSOR ----
 function initCustomCursor() {
+  // No custom cursor on touch devices (nothing to point, and it wastes a rAF loop).
+  if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
   const cursor = document.getElementById('custom-cursor');
   const dot = document.getElementById('custom-cursor-dot');
   if(!cursor || !dot) return;
@@ -273,6 +275,8 @@ function initCustomCursor() {
 
 // ---- VECTOR MOUSE PARALLAX ----
 function initVectorParallax() {
+  // Mouse-driven parallax is pointless on touch — skip it to save battery/jank.
+  if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
   const v1 = document.querySelector('.v1');
   const v2 = document.querySelector('.v2');
   const v3 = document.querySelector('.v3');
