@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 
-Sitemap: https://www.autopalatte.in/sitemap.xml
+Sitemap: https://www.autopalette.in/sitemap.xml
 
 # Auto Palette — Premium Auto Detailing, JP Nagar, Bengaluru
-# https://www.autopalatte.in
+# https://www.autopalette.in
