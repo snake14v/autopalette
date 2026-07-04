@@ -2594,3 +2594,9 @@ a, button, input, select, textarea, .wa-chip { cursor: none; }
 /* Restore usable cursors even where a custom cursor is active */
 a, button, .btn-primary, .wa-chip, .service-card, [onclick] { cursor: pointer; }
 input, textarea, select { cursor: text; }
+
+/* Get-Directions link on location cards */
+.map-link { display: inline-block; margin-top: .5rem; color: var(--gold); font-size: .8rem;
+  font-family: var(--font-display); letter-spacing: 1px; text-decoration: none;
+  border-bottom: 1px solid transparent; transition: border-color .2s; }
+.map-link:hover, .map-link:focus-visible { border-color: var(--gold); }
