@@ -6,119 +6,121 @@
 // ---- ENTRANCE GATE: ENGINE START ENGINE ----
 document.addEventListener('DOMContentLoaded', () => {
   const gate = document.getElementById('entrance-gate');
-  const mainContent = document.getElementById('main-content');
   const counterEl = document.getElementById('gate-counter-num');
   const needle = document.getElementById('tacho-needle');
   const tagline = document.getElementById('gate-tagline');
 
-  // Start engine animation automatically after a short delay
-  setTimeout(() => {
-    // Rev curve: idle -> rev -> drop -> redline
-    const revSequence = [
-      { t: 0, val: 0 },
-      { t: 500, val: 25 },
-      { t: 1000, val: 65 },
-      { t: 1400, val: 40 },
-      { t: 2000, val: 85 },
-      { t: 2300, val: 70 },
-      { t: 3000, val: 100 }
-    ];
+  // Boot the whole site IMMEDIATELY. Page content is visible by default and must
+  // never wait on — or be blocked by — the cosmetic intro. All inits are idempotent.
+  const bootSite = () => {
+    initScrollReveal();
+    initParallax();
+    initNavbar();
+    initCounterAnimation();
+    initCustomCursor();
+    initVectorParallax();
+    initFaq();
+    initPriceEstimator();
+    initMagneticButtons();
+    document.querySelector('.hero')?.classList.add('loaded');
+  };
+  bootSite();
 
-    const startTime = performance.now();
-    const duration = 3000; // 3 seconds
-
-    function interpolateRev(elapsed) {
-      if (elapsed >= duration) return 100;
-      for (let i = 0; i < revSequence.length - 1; i++) {
-        const p1 = revSequence[i];
-        const p2 = revSequence[i+1];
-        if (elapsed >= p1.t && elapsed <= p2.t) {
-          const progress = (elapsed - p1.t) / (p2.t - p1.t);
-          // Ease in out quad
-          const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-          return p1.val + (p2.val - p1.val) * ease;
-        }
-      }
-      return 100;
+  // The intro tachometer is just a dismissible overlay ON TOP of the live page.
+  let dismissed = false;
+  const dismissGate = () => {
+    if (dismissed) return;
+    dismissed = true;
+    try { sessionStorage.setItem('ap_seen', '1'); } catch (e) {}
+    if (gate) {
+      gate.classList.add('fade-out');
+      setTimeout(() => { gate.style.display = 'none'; }, 600);
     }
+  };
 
-    function animateEngine(time) {
-      const elapsed = time - startTime;
-      const currentRev = interpolateRev(elapsed);
-      
-      if (counterEl) counterEl.textContent = Math.floor(currentRev);
+  // Auto-skip the intro entirely for: no gate, reduced-motion, phones, or repeat visits.
+  let seen = false; try { seen = sessionStorage.getItem('ap_seen') === '1'; } catch (e) {}
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const small = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+  if (!gate || seen || reduce || small) {
+    if (gate) gate.style.display = 'none';
+    return;
+  }
 
-      // Rotate needle — from -135deg to 135deg
-      const rotation = -135 + (currentRev / 100) * 270;
-      if (needle) needle.setAttribute('transform', `rotate(${rotation} 150 150)`);
+  // Let the visitor bail out at any moment (button / tap / scroll / key).
+  document.getElementById('gate-skip')?.addEventListener('click', dismissGate);
+  ['keydown', 'touchstart', 'wheel'].forEach((evt) =>
+    window.addEventListener(evt, dismissGate, { once: true, passive: true })
+  );
+  // Hard cap: the intro can NEVER hold the page longer than ~2.2s.
+  const capTimer = setTimeout(dismissGate, 2200);
 
-      if (elapsed < duration) {
-        requestAnimationFrame(animateEngine);
-      } else {
-        // Hit 100% - Redline!
-        if (needle) {
-          needle.setAttribute('stroke', '#ff1a1a'); // needle turns red
-          needle.classList.add('rgb-redline');
-        }
-        if (gate) gate.classList.add('gate-shake');
-        tagline.style.opacity = '1';
-        
-        // Add white flash to body
-        const flash = document.createElement('div');
-        flash.className = 'flash-bang';
-        document.body.appendChild(flash);
-
-        // Open vault
-        setTimeout(() => {
-          gate.classList.add('fade-out');
-          setTimeout(() => {
-            gate.style.display = 'none';
-            if (mainContent) {
-              mainContent.style.display = 'block';
-              mainContent.style.opacity = '0';
-              void mainContent.offsetHeight;
-              mainContent.style.transition = 'opacity 1.5s ease';
-              mainContent.style.opacity = '1';
-
-              setTimeout(() => {
-                initScrollReveal();
-                initParallax();
-                initNavbar();
-                initCounterAnimation();
-                initCustomCursor();
-                initVectorParallax();
-                initFaq();
-                initPriceEstimator();
-                initMagneticButtons();
-                document.querySelector('.hero')?.classList.add('loaded');
-                flash.remove();
-              }, 100);
-            }
-          }, 1200);
-        }, 500);
-      }
+  // Short cosmetic rev sweep, then auto-dismiss.
+  const startTime = performance.now();
+  const duration = 1500;
+  function animateEngine(time) {
+    if (dismissed) return;
+    const elapsed = time - startTime;
+    const rev = Math.min(100, (elapsed / duration) * 100);
+    if (counterEl) counterEl.textContent = Math.floor(rev);
+    if (needle) needle.setAttribute('transform', `rotate(${-135 + (rev / 100) * 270} 150 150)`);
+    if (elapsed < duration) {
+      requestAnimationFrame(animateEngine);
+    } else {
+      if (needle) { needle.setAttribute('stroke', '#ff1a1a'); needle.classList.add('rgb-redline'); }
+      if (tagline) tagline.style.opacity = '1';
+      clearTimeout(capTimer);
+      setTimeout(dismissGate, 250);
     }
-
-    requestAnimationFrame(animateEngine);
-  }, 500); // 500ms delay before animation starts
+  }
+  requestAnimationFrame(animateEngine);
 });
 
 // ---- SCROLL REVEAL ENGINE ----
 function initScrollReveal() {
-  const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+  if (initScrollReveal.__init) return;          // idempotent — safe to call more than once
+  initScrollReveal.__init = true;
+
+  const revealElements = Array.from(
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale')
+  );
+  if (!revealElements.length) return;
+
+  const activate = (el) => el.classList.add('active');
+
+  // Respect reduced-motion: show everything immediately, no animation dependency.
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    revealElements.forEach(activate);
+    return;
+  }
 
   const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        entry.target.classList.add('active');
+        activate(entry.target);
+        observer.unobserve(entry.target);
       }
     });
-  }, {
-    threshold: 0.15,
-    rootMargin: '0px 0px -50px 0px'
-  });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 
-  revealElements.forEach(el => observer.observe(el));
+  revealElements.forEach((el) => observer.observe(el));
+
+  // Belt-and-suspenders: a scroll/resize check that can never leave content
+  // stuck hidden even if the IntersectionObserver misfires or inits offscreen.
+  const checkInView = () => {
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    for (const el of revealElements) {
+      if (el.classList.contains('active')) continue;
+      const r = el.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < vh * 0.92) {
+        activate(el);
+        observer.unobserve(el);
+      }
+    }
+  };
+  checkInView();
+  window.addEventListener('scroll', checkInView, { passive: true });
+  window.addEventListener('resize', checkInView, { passive: true });
 }
 
 // ---- PARALLAX SCROLLING ----
@@ -200,30 +202,10 @@ document.addEventListener('click', (e) => {
 });
 
 // ---- CONTACT FORM HANDLER ----
-document.addEventListener('submit', (e) => {
-  if (e.target.id === 'enquiry-form') {
-    e.preventDefault();
-    const btn = e.target.querySelector('.btn-submit');
-    const originalText = btn.textContent;
-
-    btn.textContent = 'TRANSMITTING...';
-    btn.disabled = true;
-    btn.style.opacity = '0.7';
-
-    setTimeout(() => {
-      btn.textContent = '✓ REQUEST RECEIVED';
-      btn.style.background = '#1db954';
-      btn.style.opacity = '1';
-      e.target.reset();
-
-      setTimeout(() => {
-        btn.textContent = originalText;
-        btn.style.background = '';
-        btn.disabled = false;
-      }, 3000);
-    }, 1500);
-  }
-});
+// NOTE: the real enquiry submit handler lives in index.html and opens WhatsApp with
+// the customer's details. A second "fake success" handler used to live here and
+// showed "✓ REQUEST RECEIVED" WITHOUT sending anything — it was deleted because it
+// silently lost leads (e.g. when the WhatsApp popup was blocked). Do not re-add it.
 
 // ---- MOBILE MENU ----
 document.addEventListener('click', (e) => {
@@ -248,9 +230,12 @@ document.addEventListener('mousemove', (e) => {
   card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-8px)`;
 });
 
- document.addEventListener('mouseleave', (e) => {
-  if (e.target.closest('.service-card')) {
-    e.target.closest('.service-card').style.transform = '';
+document.addEventListener('mouseleave', (e) => {
+  // On a document-level mouseleave e.target can be `document` (no .closest) — guard it.
+  const t = e.target;
+  if (t instanceof Element) {
+    const card = t.closest('.service-card');
+    if (card) card.style.transform = '';
   }
 }, true);
 
