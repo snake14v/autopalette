@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { AuthState } from '../shared/data';
 import { driver, isDemo, useAuth, useEmployees } from './lib/useDriver';
 import { canLeave, navigate, useRoute, type Route } from './lib/router';
+import { CommandPalette, useCommandPaletteHotkey } from './lib/commandPalette';
 import { ToastProvider, Spinner } from './ui';
 import Login from './routes/Login';
 import DataPanel from './routes/DataPanel';
@@ -37,6 +38,12 @@ function Shell() {
   const route = useRoute();
   const signedIn = auth?.signedIn ?? false;
   const role = auth?.role ?? null;
+  const isAdmin = signedIn && role === 'admin';
+
+  // Global command palette (admin only — it searches admin-scoped data).
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const openPalette = useCallback(() => setPaletteOpen(true), []);
+  useCommandPaletteHotkey(isAdmin ? openPalette : () => {});
 
   // Redirect based on auth state + role (in an effect — never mutate the hash during render).
   useEffect(() => {
@@ -67,8 +74,9 @@ function Shell() {
 
   return (
     <div className="min-h-screen">
-      <NavBar route={route} auth={auth} />
+      <NavBar route={route} auth={auth} onOpenPalette={isAdmin ? openPalette : undefined} />
       <RouteView route={route} role={role} />
+      {isAdmin && <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />}
     </div>
   );
 }
@@ -106,7 +114,15 @@ function RouteView({ route, role }: { route: Route; role: AuthState['role'] }) {
   }
 }
 
-function NavBar({ route, auth }: { route: Route; auth: AuthState }) {
+function NavBar({
+  route,
+  auth,
+  onOpenPalette,
+}: {
+  route: Route;
+  auth: AuthState;
+  onOpenPalette?: () => void;
+}) {
   const staff = auth.role === 'staff';
   const employees = useEmployees();
   const me = staff && auth.employeeId ? employees?.find((e) => e.id === auth.employeeId) : undefined;
@@ -163,12 +179,27 @@ function NavBar({ route, auth }: { route: Route; auth: AuthState }) {
           </nav>
         )}
 
-        <button
-          onClick={signOut}
-          className="shrink-0 font-ui text-xs text-white/50 transition-colors hover:text-goldBright focus:outline-none focus-visible:text-goldBright"
-        >
-          Sign out
-        </button>
+        <div className="flex shrink-0 items-center gap-3">
+          {onOpenPalette && (
+            <button
+              onClick={onOpenPalette}
+              aria-label="Search (Ctrl/Cmd+K)"
+              title="Search — Ctrl/Cmd+K"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-ui text-xs text-white/55 transition-colors hover:border-gold/40 hover:text-goldBright focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50"
+            >
+              <span aria-hidden="true">⌕</span>
+              <kbd className="hidden font-ui text-[0.6rem] tracking-wide text-white/40 sm:inline">
+                ⌘K
+              </kbd>
+            </button>
+          )}
+          <button
+            onClick={signOut}
+            className="font-ui text-xs text-white/50 transition-colors hover:text-goldBright focus:outline-none focus-visible:text-goldBright"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </header>
   );

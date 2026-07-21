@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { Employee } from '../../shared/types';
-import { driver, isDemo, useEmployees } from '../lib/useDriver';
+import { driver, isDemo, useEmployees, useWorkItems } from '../lib/useDriver';
 import {
   Badge,
   Button,
@@ -20,9 +20,21 @@ import {
 // (live mode authenticates against the Firebase account, so no PIN field is shown).
 export default function Employees() {
   const employees = useEmployees();
+  const workItems = useWorkItems();
   const toast = useToast();
   const [editing, setEditing] = useState<Employee | null>(null);
   const [creating, setCreating] = useState(false);
+
+  // Open work items (assigned/in_progress, any date) per employee — the workload badge.
+  const openByEmployee = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const w of workItems ?? []) {
+      if (w.status === 'assigned' || w.status === 'in_progress') {
+        map.set(w.assignedTo, (map.get(w.assignedTo) ?? 0) + 1);
+      }
+    }
+    return map;
+  }, [workItems]);
 
   // Lowest free AP-EMP index (1-based), so a new hire fills the first open slot.
   const nextLoginId = useMemo(() => {
@@ -81,6 +93,11 @@ export default function Employees() {
                       <Badge tone="text-goldBright border-gold/40 bg-gold/10">{emp.loginId}</Badge>
                       {!emp.active && (
                         <Badge tone="text-white/50 border-white/20 bg-white/5">Inactive</Badge>
+                      )}
+                      {(openByEmployee.get(emp.id) ?? 0) > 0 && (
+                        <Badge tone="text-neonGold border-neonGold/40 bg-neonGold/10">
+                          {openByEmployee.get(emp.id)} open
+                        </Badge>
                       )}
                     </div>
                     <p className="mt-0.5 font-body text-xs text-white/50">

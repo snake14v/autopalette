@@ -4,6 +4,7 @@ import { driver, useBookings, useCustomers, useJobcards } from '../lib/useDriver
 import { navigate } from '../lib/router';
 import { normalizePhone } from '../../shared/data';
 import { formatDate, formatTimestamp, inr, whatsappLink } from '../lib/format';
+import { customerWhatsappLink, paymentNudgeText } from '../lib/whatsapp';
 import { rollupCustomer } from '../lib/analytics';
 import {
   BOOKING_STATUS_LABEL,
@@ -58,6 +59,14 @@ export default function CustomerDetail({ phone }: { phone: string }) {
   }, [myBookings, myJobcards]);
 
   const roll = useMemo(() => rollupCustomer(key, jobcards ?? []), [key, jobcards]);
+
+  // Most recent job card with a balance still due — the target for a payment nudge.
+  const nudgeTarget = useMemo(() => {
+    const open = myJobcards
+      .filter((j) => j.payment.status !== 'paid' && (j.pricing.balanceDue || 0) > 0)
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
+    return open[0] ?? null;
+  }, [myJobcards]);
 
   const [notes, setNotes] = useState<string | null>(null);
   const [savingNotes, setSavingNotes] = useState(false);
@@ -130,6 +139,25 @@ export default function CustomerDetail({ phone }: { phone: string }) {
         {customer.altPhone && (
           <p className="mt-3 font-body text-xs text-white/45">Alt phone: {customer.altPhone}</p>
         )}
+        {/* Payment nudge (item 4) — review-and-send WhatsApp for the latest unpaid invoice. */}
+        {roll.outstanding > 0 &&
+          nudgeTarget &&
+          (() => {
+            const waLink = customerWhatsappLink(customer.phone, paymentNudgeText(nudgeTarget));
+            return waLink ? (
+              <div className="mt-3">
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-pinstripe-emerald/40 px-3 py-1.5 font-ui text-xs text-pinstripe-emerald transition-colors hover:bg-pinstripe-emerald/10"
+                  title="Opens WhatsApp with a payment reminder to review and send"
+                >
+                  Nudge {nudgeTarget.invoiceNumber || 'invoice'} on WhatsApp
+                </a>
+              </div>
+            ) : null;
+          })()}
       </Panel>
 
       {/* Vehicles */}

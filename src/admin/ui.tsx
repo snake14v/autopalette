@@ -183,15 +183,31 @@ export function Spinner({ label = 'Loading…' }: { label?: string }) {
 
 // --- Toast --------------------------------------------------------------------------------
 
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+export interface ToastOptions {
+  tone?: 'success' | 'error';
+  /** Optional action button (e.g. Undo). Clicking it dismisses the toast then runs onClick. */
+  action?: ToastAction;
+  /** Auto-dismiss ms. Defaults to 3200, or 6000 when an action is present (time to react). */
+  duration?: number;
+}
+
 interface ToastItem {
   id: number;
   message: string;
   tone: 'success' | 'error';
+  action?: ToastAction;
 }
 
-const ToastContext = createContext<(message: string, tone?: 'success' | 'error') => void>(() => {});
+/** toast(message) | toast(message, 'error') | toast(message, { action, tone, duration }). */
+export type ToastFn = (message: string, toneOrOptions?: 'success' | 'error' | ToastOptions) => void;
 
-export function useToast() {
+const ToastContext = createContext<ToastFn>(() => {});
+
+export function useToast(): ToastFn {
   return useContext(ToastContext);
 }
 
@@ -199,10 +215,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(1);
 
-  const push = useCallback((message: string, tone: 'success' | 'error' = 'success') => {
+  const dismiss = useCallback((id: number) => {
+    setToasts((t) => t.filter((x) => x.id !== id));
+  }, []);
+
+  const push = useCallback<ToastFn>((message, toneOrOptions) => {
+    const opts: ToastOptions =
+      typeof toneOrOptions === 'string' ? { tone: toneOrOptions } : (toneOrOptions ?? {});
+    const tone = opts.tone ?? 'success';
     const id = nextId.current++;
-    setToasts((t) => [...t, { id, message, tone }]);
-    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200);
+    const duration = opts.duration ?? (opts.action ? 6000 : 3200);
+    setToasts((t) => [...t, { id, message, tone, action: opts.action }]);
+    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), duration);
   }, []);
 
   const api = useMemo(() => push, [push]);
@@ -218,13 +242,24 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto rounded-lg border px-4 py-2 font-ui text-sm shadow-xl backdrop-blur ${
+            className={`pointer-events-auto flex items-center gap-3 rounded-lg border px-4 py-2 font-ui text-sm shadow-xl backdrop-blur ${
               t.tone === 'success'
                 ? 'border-pinstripe-emerald/40 bg-char2/95 text-pinstripe-emerald'
                 : 'border-pinstripe-red/40 bg-char2/95 text-pinstripe-red'
             }`}
           >
-            {t.message}
+            <span>{t.message}</span>
+            {t.action && (
+              <button
+                onClick={() => {
+                  dismiss(t.id);
+                  t.action!.onClick();
+                }}
+                className="shrink-0 rounded border border-goldBright/50 px-2 py-0.5 font-ui text-xs font-semibold uppercase tracking-wide text-goldBright transition-colors hover:bg-goldBright/10 focus:outline-none focus-visible:ring-1 focus-visible:ring-goldBright"
+              >
+                {t.action.label}
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -409,6 +444,151 @@ export function ConfirmDialog({
             {confirmLabel}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Checkbox (bulk-select control) -----------------------------------------------------
+
+export function Checkbox({
+  checked,
+  onChange,
+  label,
+  className = '',
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  /** Accessible label — visually hidden but read by assistive tech. */
+  label: string;
+  className?: string;
+}) {
+  return (
+    <label className={`inline-flex cursor-pointer items-center ${className}`}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 shrink-0 accent-gold"
+      />
+      <span className="sr-only">{label}</span>
+    </label>
+  );
+}
+
+// --- ActionMenu (stage-aware quick actions dropdown) ------------------------------------
+
+export interface ActionMenuItem {
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+  disabled?: boolean;
+}
+
+/**
+ * A compact "⋯" trigger opening a small popover of contextual actions. Closes on outside
+ * click, Escape, or after an action fires. Stops click propagation so it can live inside a
+ * clickable card/row without triggering the row's navigation.
+ */
+export function ActionMenu({
+  items,
+  label = 'Actions',
+  align = 'right',
+}: {
+  items: ActionMenuItem[];
+  label?: string;
+  align?: 'left' | 'right';
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={label}
+        onClick={() => setOpen((v) => !v)}
+        className="rounded-lg border border-white/15 px-2.5 py-1.5 font-ui text-sm leading-none text-white/70 transition-colors hover:border-white/30 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50"
+      >
+        <span aria-hidden="true">⋯</span>
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className={`absolute z-50 mt-1 min-w-[11rem] overflow-hidden rounded-lg border border-white/12 bg-char2 shadow-2xl ${
+            align === 'right' ? 'right-0' : 'left-0'
+          }`}
+        >
+          {items.map((item, i) => (
+            <button
+              key={i}
+              role="menuitem"
+              disabled={item.disabled}
+              onClick={() => {
+                setOpen(false);
+                item.onClick();
+              }}
+              className={`block w-full px-3 py-2 text-left font-ui text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                item.danger
+                  ? 'text-pinstripe-red hover:bg-pinstripe-red/10'
+                  : 'text-white/80 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- BulkBar (sticky contextual action bar for multi-select) ----------------------------
+
+export function BulkBar({
+  count,
+  onClear,
+  children,
+}: {
+  count: number;
+  onClear: () => void;
+  /** Action buttons for the current selection. */
+  children: ReactNode;
+}) {
+  if (count === 0) return null;
+  return (
+    <div className="sticky bottom-4 z-40 mt-4 print:hidden">
+      <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 rounded-xl border border-gold/40 bg-char2/95 px-4 py-3 shadow-2xl backdrop-blur">
+        <div className="flex items-center gap-3">
+          <span className="font-ui text-sm font-semibold text-goldBright">{count} selected</span>
+          <button
+            onClick={onClear}
+            className="font-ui text-xs text-white/50 transition-colors hover:text-white/80"
+          >
+            Clear
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">{children}</div>
       </div>
     </div>
   );

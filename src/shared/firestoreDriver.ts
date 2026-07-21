@@ -323,6 +323,11 @@ export function makeFirestoreDriver(): DataDriver {
       return snap.exists() ? mapJobcard(snap.id, snap.data()) : null;
     },
 
+    async setJobcardPaymentStatus(id, status) {
+      // Nested-field write — touches only payment.status, leaving pricing/invoice untouched.
+      await updateDoc(doc(db, 'jobcards', id), { 'payment.status': status });
+    },
+
     subscribeJobcards(cb) {
       const q = query(jobcardsCol, orderBy('date', 'desc'));
       return onSnapshot(q, (snap) => {

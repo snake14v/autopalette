@@ -35,6 +35,8 @@ export interface Route {
     | 'jobcard-invoice'
     | 'not-found';
   params: Record<string, string>;
+  /** Parsed `?a=b&c=d` query pairs off the hash (Wave 3 drill-down filters). Empty when none. */
+  query: Record<string, string>;
   hash: string;
 }
 
@@ -60,8 +62,32 @@ export function canLeave(): boolean {
 
 // --- parsing ----------------------------------------------------------------------------
 
-export function parseHash(rawHash: string): Route {
-  const hash = rawHash.replace(/^#/, '') || '/';
+/** Parse a `a=b&c=d` query string into a flat record. Blank keys are skipped. */
+export function parseQueryString(queryStr: string): Record<string, string> {
+  const query: Record<string, string> = {};
+  for (const pair of queryStr.split('&')) {
+    if (!pair) continue;
+    const eq = pair.indexOf('=');
+    const key = decodeURIComponent(eq === -1 ? pair : pair.slice(0, eq)).trim();
+    const value = eq === -1 ? '' : decodeURIComponent(pair.slice(eq + 1));
+    if (key) query[key] = value;
+  }
+  return query;
+}
+
+/** Build a `?a=b&c=d` suffix from a record, skipping undefined/empty values. '' when nothing. */
+export function buildQuery(params: Record<string, string | number | undefined | null>): string {
+  const pairs: string[] = [];
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null || v === '') continue;
+    pairs.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
+  }
+  return pairs.length ? `?${pairs.join('&')}` : '';
+}
+
+type PathRoute = Omit<Route, 'query'>;
+
+function parsePath(hash: string): PathRoute {
   const segments = hash.split('/').filter(Boolean); // e.g. ['jobcards','abc','invoice']
 
   if (segments.length === 0) return { name: 'home', params: {}, hash };
@@ -91,6 +117,14 @@ export function parseHash(rawHash: string): Route {
   }
 
   return { name: 'not-found', params: {}, hash };
+}
+
+export function parseHash(rawHash: string): Route {
+  const withoutHash = rawHash.replace(/^#/, '') || '/';
+  const qIdx = withoutHash.indexOf('?');
+  const path = (qIdx === -1 ? withoutHash : withoutHash.slice(0, qIdx)) || '/';
+  const query = qIdx === -1 ? {} : parseQueryString(withoutHash.slice(qIdx + 1));
+  return { ...parsePath(path), query };
 }
 
 // --- navigation -------------------------------------------------------------------------

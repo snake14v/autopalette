@@ -1,14 +1,16 @@
-import { useState } from 'react';
-import type { BookingStatus } from '../../shared/types';
-import { driver, useBooking } from '../lib/useDriver';
+import { useMemo, useState } from 'react';
+import type { BookingStatus, WorkItem } from '../../shared/types';
+import { driver, useBooking, useWorkItems } from '../lib/useDriver';
 import { navigate } from '../lib/router';
 import { formatDate, formatTimestamp } from '../lib/format';
 import {
   BOOKING_FLOW,
   BOOKING_STATUS_LABEL,
   BOOKING_STATUS_TONE,
+  WORKITEM_STATUS_LABEL,
   nextBookingStatus,
 } from '../lib/status';
+import { customerWhatsappLink, statusNotifyText } from '../lib/whatsapp';
 import { SERVICE_CATALOG } from '../../shared/catalog';
 import {
   Badge,
@@ -26,10 +28,23 @@ const LABEL_BY_ID = new Map(SERVICE_CATALOG.map((s) => [s.id, s.label]));
 
 export default function BookingDetail({ id }: { id: string }) {
   const booking = useBooking(id);
+  const allWorkItems = useWorkItems();
   const toast = useToast();
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+
+  // Completion gate (item 10): work items linked to this booking (directly or via its job card)
+  // that are still open. Warn — never block — when they exist and we're near the "ready" hop.
+  const openItems = useMemo<WorkItem[]>(() => {
+    if (!booking) return [];
+    return (allWorkItems ?? []).filter(
+      (w) =>
+        (w.bookingId === booking.id ||
+          (booking.jobcardId != null && w.jobcardId === booking.jobcardId)) &&
+        (w.status === 'assigned' || w.status === 'in_progress')
+    );
+  }, [allWorkItems, booking]);
 
   if (booking === undefined) return <Spinner label="Loading booking…" />;
   if (booking === null) {
@@ -141,7 +156,51 @@ export default function BookingDetail({ id }: { id: string }) {
 
       {/* Status stepper */}
       <Panel className="mt-4 p-4">
-        <SectionHeading title="Status" />
+        <SectionHeading
+          title="Status"
+          right={
+            (() => {
+              const waLink = customerWhatsappLink(booking.customer.phone, statusNotifyText(booking));
+              return waLink ? (
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-pinstripe-emerald/40 px-3 py-1.5 font-ui text-xs text-pinstripe-emerald transition-colors hover:bg-pinstripe-emerald/10"
+                  title="Opens WhatsApp with a status message to review and send"
+                >
+                  Notify on WhatsApp
+                </a>
+              ) : undefined;
+            })()
+          }
+        />
+
+        {/* Completion gate — warn (don't block) when linked work items are still open. */}
+        {!isCancelled && booking.status !== 'delivered' && openItems.length > 0 && (
+          <div className="mt-3 rounded-lg border border-neonGold/40 bg-neonGold/5 p-3">
+            <p className="font-ui text-xs font-semibold uppercase tracking-wide text-neonGold">
+              {openItems.length} work item{openItems.length === 1 ? '' : 's'} still open
+            </p>
+            <p className="mt-1 font-body text-xs text-white/60">
+              Advancing to “Ready” may be premature while these are unfinished:
+            </p>
+            <ul className="mt-2 flex flex-col gap-1">
+              {openItems.map((w) => (
+                <li key={w.id} className="font-body text-xs text-white/70">
+                  • {w.title} <span className="text-white/40">— {WORKITEM_STATUS_LABEL[w.status]}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => navigate('/dayboard')}
+              className="mt-2 font-ui text-xs text-pinstripe-cyan/80 hover:text-pinstripe-cyan"
+            >
+              Open Day Board →
+            </button>
+          </div>
+        )}
+
         <ol className="mt-3 flex flex-wrap items-center gap-1.5">
           {BOOKING_FLOW.map((s, i) => {
             const currentIdx = BOOKING_FLOW.indexOf(booking.status);

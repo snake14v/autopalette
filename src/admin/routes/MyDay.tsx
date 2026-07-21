@@ -5,6 +5,7 @@ import { navigate } from '../lib/router';
 import { fmtHours, isBeforeToday, todayISO } from '../lib/dates';
 import { formatDate, formatTimestamp } from '../lib/format';
 import { WORKITEM_STATUS_LABEL, WORKITEM_STATUS_TONE } from '../lib/status';
+import { useOptimisticAction } from '../lib/useOptimisticAction';
 import { Badge, Button, EmptyState, Panel, Spinner, Textarea, Toggle, useToast } from '../ui';
 
 // Staff "My Day" (Wave 2): the signed-in employee's own items — today plus an overdue
@@ -99,23 +100,22 @@ function Section({
 }
 
 function StaffCard({ item, overdue = false }: { item: WorkItem; overdue?: boolean }) {
-  const toast = useToast();
-  const [busy, setBusy] = useState(false);
+  const optimistic = useOptimisticAction();
   const [noteOpen, setNoteOpen] = useState(false);
+  const busy = optimistic.busy;
 
   const readOnly = item.status === 'confirmed';
 
-  async function move(status: 'in_progress' | 'finished') {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await driver.updateWorkItemStatus(item.id, status);
-      toast(status === 'in_progress' ? 'Started' : 'Finished — hours logged');
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'Update failed', 'error');
-    } finally {
-      setBusy(false);
-    }
+  // Optimistic Start/Finish with an Undo that reverts the status (item 6). Hours re-log on a
+  // fresh Finish; Undo restores the prior stage.
+  function move(status: 'in_progress' | 'finished') {
+    const prev = item.status;
+    optimistic.run({
+      do: () => driver.updateWorkItemStatus(item.id, status),
+      undo: () => driver.updateWorkItemStatus(item.id, prev),
+      message: status === 'in_progress' ? 'Started' : 'Finished — hours logged',
+      undoneMessage: `Reverted to ${WORKITEM_STATUS_LABEL[prev]}`,
+    });
   }
 
   return (

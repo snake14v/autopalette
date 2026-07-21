@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useJobcards, useWorkItems } from '../lib/useDriver';
-import { navigate } from '../lib/router';
+import { buildQuery, navigate } from '../lib/router';
 import { inr } from '../lib/format';
 import { fmtHours, monthLabel } from '../lib/dates';
 import {
@@ -57,43 +57,52 @@ export default function DataPanel() {
         </div>
       ) : (
         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-          {/* Jobs this month vs last */}
-          <Panel className="p-4">
-            <CardHead
-              title="Jobs This Month"
-              sub={`${monthLabel(stats.counts.thisKey)} vs ${monthLabel(stats.counts.lastKey)}`}
-            />
-            <div className="mt-3 flex items-end gap-4">
-              <div>
-                <p className="font-display text-4xl font-bold text-goldBright">
-                  {stats.counts.thisMonth}
-                </p>
-                <p className="font-body text-xs text-white/45">this month</p>
+          {/* Jobs this month vs last — drills to the month-filtered job cards. */}
+          <Panel className="p-0">
+            <button
+              onClick={() => navigate(`/jobcards${buildQuery({ month: stats.counts.thisKey })}`)}
+              className="block w-full rounded-xl p-4 text-left transition-colors hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50"
+            >
+              <CardHead
+                title="Jobs This Month"
+                sub={`${monthLabel(stats.counts.thisKey)} vs ${monthLabel(stats.counts.lastKey)}`}
+                drill
+              />
+              <div className="mt-3 flex items-end gap-4">
+                <div>
+                  <p className="font-display text-4xl font-bold text-goldBright">
+                    {stats.counts.thisMonth}
+                  </p>
+                  <p className="font-body text-xs text-white/45">this month</p>
+                </div>
+                <div className="pb-1">
+                  <p className="font-ui text-sm text-white/70">{stats.counts.lastMonth} last</p>
+                  <p
+                    className={`font-body text-xs ${
+                      monthDelta > 0
+                        ? 'text-pinstripe-emerald'
+                        : monthDelta < 0
+                          ? 'text-pinstripe-red'
+                          : 'text-white/40'
+                    }`}
+                  >
+                    {monthDelta > 0 ? '▲' : monthDelta < 0 ? '▼' : '—'} {Math.abs(monthDelta)}
+                  </p>
+                </div>
               </div>
-              <div className="pb-1">
-                <p className="font-ui text-sm text-white/70">{stats.counts.lastMonth} last</p>
-                <p
-                  className={`font-body text-xs ${
-                    monthDelta > 0
-                      ? 'text-pinstripe-emerald'
-                      : monthDelta < 0
-                        ? 'text-pinstripe-red'
-                        : 'text-white/40'
-                  }`}
-                >
-                  {monthDelta > 0 ? '▲' : monthDelta < 0 ? '▼' : '—'} {Math.abs(monthDelta)}
-                </p>
-              </div>
-            </div>
+            </button>
           </Panel>
 
           {/* Outstanding + repeat rate */}
           <Panel className="p-4">
             <CardHead title="Money & Loyalty" sub="All job cards to date" />
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <div>
+              <button
+                onClick={() => navigate(`/jobcards${buildQuery({ pay: 'outstanding' })}`)}
+                className="rounded-lg p-1 text-left transition-colors hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50"
+              >
                 <p className="font-ui text-[0.65rem] uppercase tracking-wider text-white/45">
-                  Outstanding
+                  Outstanding <span aria-hidden="true" className="text-pinstripe-cyan/70">→</span>
                 </p>
                 <p
                   className={`mt-0.5 font-ui text-xl font-bold ${
@@ -102,8 +111,8 @@ export default function DataPanel() {
                 >
                   {inr(stats.outstanding)}
                 </p>
-              </div>
-              <div>
+              </button>
+              <div className="p-1">
                 <p className="font-ui text-[0.65rem] uppercase tracking-wider text-white/45">
                   Repeat Customers
                 </p>
@@ -127,20 +136,24 @@ export default function DataPanel() {
             />
           </Panel>
 
-          {/* Hours logged per week */}
-          <Panel className="p-4">
-            <CardHead title="Hours Logged per Week" sub="From work items · last 6 weeks" />
-            <BarChart
-              data={stats.hours.map((h) => ({ label: h.key.replace(/^\d{4}-/, ''), value: h.hours }))}
-              format={(v) => fmtHours(v)}
-              tone="bg-pinstripe-cyan/60"
-              emptyLabel="No hours logged yet"
-            />
+          {/* Hours logged per week — drills to the Day Board. */}
+          <Panel className="p-0">
+            <button
+              onClick={() => navigate('/dayboard')}
+              className="block w-full rounded-xl p-4 text-left transition-colors hover:bg-white/[0.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50"
+            >
+              <BarChart
+                data={stats.hours.map((h) => ({ label: h.key.replace(/^\d{4}-/, ''), value: h.hours }))}
+                format={(v) => fmtHours(v)}
+                tone="bg-pinstripe-cyan/60"
+                emptyLabel="No hours logged yet"
+              />
+            </button>
           </Panel>
 
-          {/* Top services */}
+          {/* Top services — each row drills to job cards filtered by that service. */}
           <Panel className="p-4 md:col-span-2">
-            <CardHead title="Top Services" sub="By frequency across all job cards" />
+            <CardHead title="Top Services" sub="By frequency across all job cards · tap a row to view" />
             {stats.services.length === 0 ? (
               <p className="mt-3 font-body text-sm text-white/40">No services billed yet.</p>
             ) : (
@@ -148,19 +161,24 @@ export default function DataPanel() {
                 {stats.services.map((s) => {
                   const max = stats.services[0].count || 1;
                   return (
-                    <li key={s.id} className="flex items-center gap-3">
-                      <span className="w-40 shrink-0 truncate font-body text-sm text-white/75">
-                        {s.label}
-                      </span>
-                      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/5">
-                        <div
-                          className="h-full rounded-full bg-gold/60"
-                          style={{ width: `${Math.max(6, (s.count / max) * 100)}%` }}
-                        />
-                      </div>
-                      <span className="w-8 shrink-0 text-right font-ui text-sm text-white/80">
-                        {s.count}
-                      </span>
+                    <li key={s.id}>
+                      <button
+                        onClick={() => navigate(`/jobcards${buildQuery({ service: s.id })}`)}
+                        className="flex w-full items-center gap-3 rounded-lg p-1 text-left transition-colors hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50"
+                      >
+                        <span className="w-40 shrink-0 truncate font-body text-sm text-white/75">
+                          {s.label}
+                        </span>
+                        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/5">
+                          <div
+                            className="h-full rounded-full bg-gold/60"
+                            style={{ width: `${Math.max(6, (s.count / max) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="w-8 shrink-0 text-right font-ui text-sm text-white/80">
+                          {s.count}
+                        </span>
+                      </button>
                     </li>
                   );
                 })}
@@ -181,11 +199,12 @@ export default function DataPanel() {
   );
 }
 
-function CardHead({ title, sub }: { title: string; sub: string }) {
+function CardHead({ title, sub, drill }: { title: string; sub: string; drill?: boolean }) {
   return (
     <div>
       <h3 className="font-display text-sm font-bold uppercase tracking-wide text-goldBright">
         {title}
+        {drill && <span aria-hidden="true" className="ml-1.5 text-pinstripe-cyan/70">→</span>}
       </h3>
       <p className="mt-0.5 font-body text-[0.65rem] text-white/40">{sub}</p>
     </div>

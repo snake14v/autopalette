@@ -125,6 +125,12 @@ export interface DataDriver {
   saveJobcard(jc: Jobcard): Promise<Jobcard>;
   getJobcard(id: string): Promise<Jobcard | null>;
   subscribeJobcards(cb: (jobcards: Jobcard[]) => void): () => void;
+  /**
+   * Wave 3 — light-touch payment-status write for inline mark-paid / bulk set / undo, without
+   * a full saveJobcard round-trip (no pricing recompute, no invoice allocation, no customer
+   * upsert). Only touches payment.status. Inverse of itself: call again with the prior status.
+   */
+  setJobcardPaymentStatus(id: string, status: Jobcard['payment']['status']): Promise<void>;
 
   // --- Wave 2: roster ---------------------------------------------------------------------
   subscribeEmployees(cb: (employees: Employee[]) => void): () => void;
@@ -476,6 +482,15 @@ export const localDriver: DataDriver = {
   async getJobcard(id) {
     const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
     return jobcards[id] ?? null;
+  },
+
+  async setJobcardPaymentStatus(id, status) {
+    const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
+    const jc = jobcards[id];
+    if (!jc) throw new Error(`Job card ${id} not found`);
+    jc.payment = { ...jc.payment, status };
+    jobcards[id] = jc;
+    writeStore(LOCAL_KEYS.jobcards, jobcards);
   },
 
   subscribeJobcards(cb) {

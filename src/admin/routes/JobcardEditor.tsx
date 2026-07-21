@@ -6,6 +6,7 @@ import { driver, useEmployees, useJobcardOnce, useWorkItems } from '../lib/useDr
 import { navigate, setNavGuard } from '../lib/router';
 import { fmtHours, todayISO } from '../lib/dates';
 import { inr } from '../lib/format';
+import { customerWhatsappLink, paymentNudgeText } from '../lib/whatsapp';
 import { WORKITEM_STATUS_LABEL, WORKITEM_STATUS_TONE } from '../lib/status';
 import {
   Badge,
@@ -211,6 +212,26 @@ export default function JobcardEditor({ id }: { id: string }) {
               View source booking →
             </button>
           )}
+          {/* Payment nudge (item 4) — appears once saved; reflects the persisted invoice. */}
+          {!dirty &&
+            draft.invoiceNumber &&
+            (() => {
+              const waLink = customerWhatsappLink(
+                draft.customer.phone,
+                paymentNudgeText({ ...draft, pricing })
+              );
+              return waLink ? (
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-pinstripe-emerald/40 px-3 py-1.5 font-ui text-xs text-pinstripe-emerald transition-colors hover:bg-pinstripe-emerald/10"
+                  title="Opens WhatsApp with an invoice/payment message to review and send"
+                >
+                  Payment nudge on WhatsApp
+                </a>
+              ) : null;
+            })()}
         </div>
       </div>
 
