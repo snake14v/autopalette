@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>AutoPalette — Business Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<style>
+/* AutoPalette brand palette — pulled verbatim from site style.css :root */
+:root{
+  --black:#000000; --bg:#0a0a0a; --bg-alt:#0f0f0f; --bg-card:#141414;
+  --surface:#1a1a1a; --gold:#c5a44e; --gold-bright:#e8c96e; --gold-dim:#8a7432;
+  --neon-gold:#ffd700; --red:#ff1a1a; --cyan:#00e5ff; --magenta:#ff00d4; --emerald:#00ff88;
+  --white:#f5f5f5; --gray:#b3b3b3; --gray-dark:#8a8a8a; --gray-darker:#333;
+  --font-display:'Orbitron',sans-serif; --font-heading:'Bebas Neue',sans-serif;
+  --font-serif:'Playfair Display',serif; --font-body:'Inter',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+body{background:#2b2b2b;font-family:var(--font-body);}
+
+/* Trim size: 3.5in x 2in @ 300dpi = 1050 x 600 px */
+.card{
+  position:relative;
+  width:1050px;height:600px;
+  overflow:hidden;
+  background:var(--black);
+  color:var(--white);
+}
+.stage{padding:40px;}
+
+/* ---- Shared cyber-industrial texture layers ---- */
+.grad-base{position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(197,164,78,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(255,26,26,0.06) 0%, transparent 50%),
+    linear-gradient(160deg,#0d0d0d 0%,#000 60%,#0a0a0a 100%);
+}
+/* hex/tech grid */
+.grid-lines{position:absolute;inset:0;opacity:0.5;
+  background-image:
+    linear-gradient(rgba(197,164,78,0.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(197,164,78,0.05) 1px,transparent 1px);
+  background-size:44px 44px;
+  mask-image:radial-gradient(ellipse at center, #000 30%, transparent 85%);
+  -webkit-mask-image:radial-gradient(ellipse at center, #000 30%, transparent 85%);
+}
+/* RGB pinstripe — signature site accent (cyan/magenta/gold/red) */
+.pinstripe{position:absolute;left:0;right:0;height:6px;display:flex;}
+.pinstripe span{flex:1;}
+.pinstripe .c{background:var(--cyan);} .pinstripe .m{background:var(--magenta);}
+.pinstripe .g{background:var(--gold);} .pinstripe .r{background:var(--red);}
+.pinstripe.top{top:0;} .pinstripe.bottom{bottom:0;}
+.pinstripe.thin span{opacity:0.9;}
+
+/* corner tactical brackets */
+.bracket{position:absolute;width:46px;height:46px;border:2px solid var(--gold-dim);opacity:0.55;}
+.bracket.tl{top:22px;left:22px;border-right:0;border-bottom:0;}
+.bracket.tr{top:22px;right:22px;border-left:0;border-bottom:0;}
+.bracket.bl{bottom:22px;left:22px;border-right:0;border-top:0;}
+.bracket.br{bottom:22px;right:22px;border-left:0;border-top:0;}
+
+/* noise */
+.noise{position:absolute;inset:0;pointer-events:none;opacity:0.04;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============ FRONT ============ */
+.front .stage{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;height:100%;position:relative;z-index:2;gap:6px;
+}
+.front .estd{
+  font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:7px;
+  color:var(--gold);display:flex;align-items:center;gap:16px;margin-bottom:6px;
+}
+.front .estd .ln{width:52px;height:1px;background:var(--gold-dim);}
+.logo-xxxl{width:430px;height:auto;filter:drop-shadow(0 0 26px rgba(255,255,255,0.28));}
+.front .tag{
+  font-family:var(--font-heading);font-size:34px;letter-spacing:5px;color:var(--white);
+  line-height:1;margin-top:14px;
+}
+.front .tag .perfect{
+  color:transparent;-webkit-text-stroke:1.5px var(--gold);
+}
+.front .sub{
+  font-family:var(--font-serif);font-style:italic;font-size:17px;color:var(--gray);
+  letter-spacing:1px;margin-top:12px;
+}
+.front .site{
+  font-family:var(--font-display);font-size:13px;letter-spacing:4px;color:var(--gold-dim);
+  margin-top:16px;text-transform:uppercase;
+}
+
+/* ============ BACK ============ */
+.back .stage{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;}
+.back-head{display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--gray-darker);padding-bottom:16px;}
+.back-head .lg{height:78px;width:auto;filter:drop-shadow(0 0 14px rgba(255,255,255,0.25));}
+.back-head .h-right{text-align:right;}
+.back-head .h-title{font-family:var(--font-heading);font-size:26px;letter-spacing:4px;color:var(--white);line-height:1;}
+.back-head .h-sub{font-family:var(--font-display);font-size:11px;letter-spacing:3px;color:var(--gold);margin-top:6px;}
+
+.back-body{display:flex;gap:34px;flex:1;padding-top:20px;align-items:center;}
+.svc-list{margin-top:4px;}
+.svc-list li{line-height:1.2;}
+.col-svc{flex:1.15;}
+.col-contact{flex:1;border-left:1px solid var(--gray-darker);padding-left:32px;}
+
+.col-label{font-family:var(--font-display);font-size:11px;letter-spacing:4px;color:var(--gold);
+  margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.col-label .dot{width:7px;height:7px;background:var(--gold);
+  clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);}
+
+.svc-list{display:grid;grid-template-columns:1fr 1fr;gap:20px 18px;}
+.svc-list li{font-family:var(--font-body);font-size:14.5px;color:var(--white);
+  display:flex;align-items:center;gap:9px;font-weight:500;}
+.svc-list li::before{content:'';width:9px;height:9px;
+  background:var(--gold);clip-path:polygon(0 0,100% 0,100% 100%);flex-shrink:0;}
+
+.contact-row{display:flex;flex-direction:column;gap:22px;}
+.c-item{}
+.c-item .c-k{font-family:var(--font-display);font-size:9.5px;letter-spacing:2px;
+  color:var(--gray-dark);text-transform:uppercase;margin-bottom:3px;}
+.c-item .c-v{font-size:14px;color:var(--white);line-height:1.35;}
+.c-item .c-v.gold{color:var(--gold-bright);font-weight:600;letter-spacing:0.5px;}
+
+.back-foot{border-top:1px solid var(--gray-darker);margin-top:14px;padding-top:14px;
+  display:flex;align-items:center;justify-content:space-between;}
+.qr-block{display:flex;align-items:center;gap:12px;}
+.qr-block img{width:58px;height:58px;border-radius:3px;}
+.qr-block .qr-txt{display:flex;flex-direction:column;gap:2px;}
+.qr-block .qr-label{font-family:var(--font-display);font-size:10px;letter-spacing:3px;color:var(--gray);text-transform:uppercase;}
+.qr-block .qr-url{font-family:var(--font-display);font-size:13px;letter-spacing:1.5px;color:var(--gold-bright);font-weight:600;}
+.foot-hours{font-family:var(--font-body);font-size:11px;color:var(--gray-dark);letter-spacing:1px;}
+</style>
+</head>
+<body>
+
+<!-- ===================== FRONT ===================== -->
+<div class="card front" id="front">
+  <div class="grad-base"></div>
+  <div class="grid-lines"></div>
+  <div class="noise"></div>
+  <div class="pinstripe top"><span class="c"></span><span class="m"></span><span class="g"></span><span class="r"></span></div>
+  <div class="pinstripe bottom"><span class="r"></span><span class="g"></span><span class="m"></span><span class="c"></span></div>
+  <div class="bracket tl"></div><div class="bracket tr"></div>
+  <div class="bracket bl"></div><div class="bracket br"></div>
+
+  <div class="stage">
+    <div class="estd"><span class="ln"></span>ESTD 2022 · JP NAGAR, BENGALURU<span class="ln"></span></div>
+    <img class="logo-xxxl" src="logo.png" alt="AutoPalette"/>
+    <div class="tag">WE DON'T DETAIL — <span class="perfect">WE PERFECT</span></div>
+    <div class="sub">Paint Protection Film · Ceramic Coating · Body Shop · Mods</div>
+    <div class="site">@AUTOPALETTE_</div>
+  </div>
+</div>
+
+<!-- ===================== BACK ===================== -->
+<div class="card back" id="back">
+  <div class="grad-base"></div>
+  <div class="grid-lines"></div>
+  <div class="noise"></div>
+  <div class="pinstripe top"><span class="c"></span><span class="m"></span><span class="g"></span><span class="r"></span></div>
+  <div class="pinstripe bottom"><span class="r"></span><span class="g"></span><span class="m"></span><span class="c"></span></div>
+  <div class="bracket tl"></div><div class="bracket tr"></div>
+  <div class="bracket bl"></div><div class="bracket br"></div>
+
+  <div class="stage">
+    <div class="back-head">
+      <img class="lg" src="logo.png" alt="AutoPalette"/>
+      <div class="h-right">
+        <div class="h-title">THE UNDERGROUND<br/>DETAILING VAULT</div>
+        <div class="h-sub">◆ TERRY NOIR × NFS UNDERGROUND ◆</div>
+      </div>
+    </div>
+
+    <div class="back-body">
+      <div class="col-svc">
+        <div class="col-label"><span class="dot"></span>SERVICES</div>
+        <ul class="svc-list">
+          <li>Paint Protection Film</li>
+          <li>Ceramic &amp; Graphene</li>
+          <li>Body Shop &amp; Painting</li>
+          <li>Pro Detailing</li>
+          <li>Car &amp; Bike Mods</li>
+          <li>Accessories &amp; Upgrades</li>
+        </ul>
+      </div>
+
+      <div class="col-contact">
+        <div class="col-label"><span class="dot"></span>CONTACT</div>
+        <div class="contact-row">
+          <div class="c-item">
+            <div class="c-k">Call / WhatsApp</div>
+            <div class="c-v gold">+91 88844 71117 · +91 99000 12090</div>
+          </div>
+          <div class="c-item">
+            <div class="c-k">Studio &amp; Body Shop</div>
+            <div class="c-v">JP Nagar 9th Phase, Bengaluru 560108</div>
+          </div>
+          <div class="c-item">
+            <div class="c-k">Instagram · Email</div>
+            <div class="c-v">@autopalette_ &nbsp;·&nbsp; [EMAIL — add before print]</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="back-foot">
+      <div class="qr-block">
+        <img src="qr-autopalette.png" alt="Scan to visit autopalette.in"/>
+        <div class="qr-txt">
+          <div class="qr-label">Scan to visit</div>
+          <div class="qr-url">WWW.AUTOPALETTE.IN</div>
+        </div>
+      </div>
+      <div class="foot-hours">Open 9 AM – 10 PM Daily</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

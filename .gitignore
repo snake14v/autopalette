@@ -5,3 +5,10 @@ dist-ssr
 .env
 .env.*
 .DS_Store
+
+.env
+docs/CREDENTIALS*
+_verify/
+_verify2/
+
+.vercel

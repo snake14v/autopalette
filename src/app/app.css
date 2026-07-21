@@ -1,0 +1,37 @@
+/* Customer-app-local styles. Tailwind + brand tokens come from src/shared/app.css
+   (imported first in main.tsx). This file only adds a few things awkward to express as
+   utility classes: iOS safe-area padding, the pinstripe accent, and reduced-motion. */
+
+/* Respect the notch / home indicator on installed iOS PWAs. */
+.ap-safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.ap-safe-top {
+  padding-top: max(0px, env(safe-area-inset-top));
+}
+
+/* Thin RGB-pinstripe accent along the very top edge — subtle, this is a working app. */
+.ap-pinstripe {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    #00e5ff 0%,
+    #ff00d4 33%,
+    #00ff88 66%,
+    #ffd700 100%
+  );
+  opacity: 0.85;
+}
+
+/* Native datalist/date controls render dark-on-dark badly; nudge the date picker icon. */
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(1) saturate(3) hue-rotate(5deg);
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

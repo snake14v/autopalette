@@ -1,0 +1,110 @@
+rules_version = '2';
+
+// Per docs/APP_SPEC.md "Roles & auth" (Wave 1) + "Wave 2 — Employees & daily work tracking":
+//   bookings:  create: true (validated fields only), get: true, list/update/delete: admin only
+//              (Wave 2: staff may also list/get, to work their assigned jobs)
+//   jobcards:  admin only to write; Wave 2: staff may read
+//   employees / work_items: staff may read; staff may update ONLY their own work_items'
+//              status/notes/timestamps (never to 'confirmed', never reassign) — everything
+//              else (roster writes, confirm, reassign, hours adjustments) is admin only.
+//   customers / counters / settings: admin only (all operations)
+//   users:     admin check doc — readable by its own owner or an admin, never client-writable
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function myUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        myUserDoc().role == 'admin';
+    }
+
+    function isStaff() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        myUserDoc().role == 'staff';
+    }
+
+    /** The signed-in staff member's employeeId, or null if not staff / no doc. */
+    function myEmployeeId() {
+      return isStaff() ? myUserDoc().employeeId : null;
+    }
+
+    /** Staff may update ONLY status/notes/timestamps on their OWN work item, and never to
+        'confirmed' (that's confirmWorkItem(), admin only) or reassign it to someone else. */
+    function isValidStaffWorkItemUpdate() {
+      let incoming = request.resource.data;
+      return resource.data.assignedTo == myEmployeeId() &&
+        incoming.assignedTo == resource.data.assignedTo &&
+        incoming.status != 'confirmed' &&
+        incoming.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'notes', 'startedAt', 'finishedAt', 'hoursLogged']);
+    }
+
+    function isValidBookingCreate(b) {
+      return b.keys().hasAll(['status', 'statusHistory', 'customer', 'vehicle', 'serviceIds']) &&
+        b.status == 'requested' &&
+        b.customer.keys().hasAll(['name', 'phone']) &&
+        b.customer.name is string && b.customer.name.size() > 0 &&
+        b.customer.phone is string && b.customer.phone.size() > 0 &&
+        b.vehicle.keys().hasAll(['regNumber', 'makeModel']) &&
+        b.vehicle.regNumber is string &&
+        b.vehicle.makeModel is string &&
+        b.serviceIds is list;
+    }
+
+    match /bookings/{bookingId} {
+      allow create: if isValidBookingCreate(request.resource.data);
+      allow get: if true; // booking ID itself is the customer's tracking capability
+      allow list: if isAdmin() || isStaff();
+      allow update, delete: if isAdmin();
+    }
+
+    match /jobcards/{jobcardId} {
+      allow read: if isAdmin() || isStaff();
+      allow write: if isAdmin();
+    }
+
+    match /counters/{counterId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Wave 2 — roster. Staff may read (to see who's who on the Day Board); only admin
+    // creates/edits employees.
+    match /employees/{employeeId} {
+      allow read: if isAdmin() || isStaff();
+      allow write: if isAdmin();
+    }
+
+    // Wave 2 — daily work tracking. Staff may read all work items (Day Board context) and
+    // update ONLY their own assigned item's status/notes/timestamps — never confirm,
+    // reassign, or hand-adjust hoursLogged (that's adjustWorkItemHours(), admin only).
+    match /work_items/{workItemId} {
+      allow read: if isAdmin() || isStaff();
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (isStaff() && isValidStaffWorkItemUpdate());
+      allow delete: if isAdmin();
+    }
+
+    // Wave 2 — customer registry. Not in the staff read list (owner directive): admin only.
+    match /customers/{customerId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if false; // managed from the Firebase console / Admin SDK only
+    }
+  }
+}

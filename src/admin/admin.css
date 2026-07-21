@@ -1,0 +1,60 @@
+/* Admin-only styles. Imported from src/admin/main.tsx alongside the shared app.css.
+   Mostly the printable-invoice concerns that Tailwind utilities can't express (@page, and
+   forcing the light gold tints to survive an inkjet via print-color-adjust). */
+
+/* On-screen A4 sheet: white paper centered on the dark app background. */
+.invoice-sheet {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  background: #ffffff;
+  color: #1a1a1a;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Light gold tint panels + hairline rules — "designer ink-saver" per APP_SPEC. */
+.inv-tint {
+  background: rgba(197, 164, 78, 0.08); /* gold @ 8% */
+}
+.inv-accent-rule {
+  border-top: 2px solid #c5a44e;
+}
+.inv-hairline {
+  border-color: rgba(26, 26, 26, 0.18);
+}
+
+@media screen {
+  .invoice-sheet {
+    border-radius: 4px;
+  }
+}
+
+@media print {
+  /* Only the invoice sheet prints; everything else (app shell, toasts) is print:hidden. */
+  html,
+  body,
+  #root {
+    height: auto !important;
+    background: #ffffff !important;
+  }
+
+  .invoice-sheet {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  /* Avoid awkward breaks inside key blocks. */
+  .inv-no-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

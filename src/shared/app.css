@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-char text-white font-body antialiased;
+    background-color: #0a0a0a;
+  }
+}
+
+@layer components {
+  /* Small "DEMO MODE" badge used by both apps when the local (non-Firestore) driver is active.
+     pointer-events-none at the source: this badge must never swallow taps on whatever sits
+     underneath it (e.g. a pinned action bar) — see src/app/components/Shell.tsx, which layers
+     its own pointer-events-none badge below this class for the same reason. */
+  .demo-mode-badge {
+    @apply pointer-events-none fixed bottom-3 right-3 z-50 rounded-full border border-gold/40 bg-char2/90 px-3 py-1
+      font-ui text-xs tracking-wide text-goldBright shadow-lg backdrop-blur;
+  }
+}
