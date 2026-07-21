@@ -41,6 +41,10 @@ if (hasFirebaseConfig) {
   const app = initializeApp(firebaseConfig as FirebaseOptions);
   firestoreInstance = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    // Our types use optional fields; the demo driver drops undefined silently but
+    // Firestore rejects it ("Unsupported field value: undefined"). Strip globally
+    // here so every write path behaves identically in both drivers.
+    ignoreUndefinedProperties: true,
   });
   authInstance = getAuth(app);
 }
