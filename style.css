@@ -3,7 +3,9 @@
    Black / gold identity, restrained (matches booking-app tone)
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');
+/* Fonts load via <link> in index.html head (preconnect + parallel fetch) —
+   an @import here would serialize: style.css downloads, THEN discovers the
+   font CSS, THEN fetches fonts. Do not re-add @import. */
 
 :root {
   --black: #000000;

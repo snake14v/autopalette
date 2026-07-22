@@ -27,6 +27,9 @@
   <meta name="twitter:image" content="https://www.autopalette.in/logo.png"/>
   <link rel="icon" href="/logo.png" type="image/png"/>
   <link rel="apple-touch-icon" href="/logo.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap"/>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"AutoRepair","name":"Auto Palette","url":"https://www.autopalette.in","logo":"https://www.autopalette.in/logo.png","telephone":["+919900012090","+918884471117"],"foundingDate":"2022","priceRange":"₹₹₹","address":{"@type":"PostalAddress","streetAddress":"Royal Park Residency Layout 1, JP Nagar 9th Phase","addressLocality":"Bengaluru","addressRegion":"Karnataka","postalCode":"560108","addressCountry":"IN"},"geo":{"@type":"GeoCoordinates","latitude":12.9063,"longitude":77.5857},"sameAs":["https://www.instagram.com/autopalette_/"]}</script>
   <link rel="stylesheet" href="/style.css"/>
 </head>
@@ -38,7 +41,10 @@
 <!-- NAVBAR -->
 <nav class="navbar">
   <a href="#home" class="logo">
-    <img src="/logo.png" alt="Auto Palette" class="logo-img"/>
+    <picture>
+      <source srcset="/logo.webp" type="image/webp"/>
+      <img src="/logo.png" alt="Auto Palette" class="logo-img"/>
+    </picture>
   </a>
   <div class="nav-links" id="nav-links">
     <a href="#services" class="nav-link" onclick="closeMenu()">Services</a>
@@ -446,7 +452,10 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <img loading="lazy" decoding="async" src="/logo.png" alt="Auto Palette" class="footer-logo-img"/>
+        <picture>
+          <source srcset="/logo.webp" type="image/webp"/>
+          <img loading="lazy" decoding="async" src="/logo.png" alt="Auto Palette" class="footer-logo-img"/>
+        </picture>
         <p class="footer-brand-tagline">"We don't detail. We perfect."</p>
         <p style="color:#888;font-size:.85rem;">ESTD 2022 · JP Nagar, Bengaluru</p>
         <div class="footer-social">
