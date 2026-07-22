@@ -42,6 +42,7 @@ import {
   blankJobcard,
   normalizePhone,
   round2,
+  genId,
   assertValidJobcardTransition,
   assertQualityCheckPassed,
   assertDeliverySignedOff,
@@ -113,7 +114,10 @@ export function makeFirestoreDriver(): DataDriver {
     return invoiceNumber;
   }
 
-  /** Auto-upsert helper shared by createBooking + saveJobcard (Wave 2 customer registry). */
+  /** Auto-upsert into the customer registry — called ONLY from saveJobcard (admin
+      context). createBooking must never call this: the customer app is
+      unauthenticated and /customers is admin-only in firestore.rules, so the write
+      was silently permission-denied on live (2026-07-22 fix). */
   async function upsertCustomer(input: {
     name: string;
     phone: string;
@@ -173,7 +177,12 @@ export function makeFirestoreDriver(): DataDriver {
 
     async createBooking(input) {
       const now = Date.now();
-      const docRef = await addDoc(bookingsCol, {
+      // genId('bk') — not addDoc — so live booking IDs match the demo driver's
+      // bk_... shape the Track form promises. Old auto-ID bookings stay trackable
+      // (getBooking looks up whatever ID it is given).
+      const id = genId('bk');
+      const docRef = doc(bookingsCol, id);
+      await setDoc(docRef, {
         createdAt: serverTimestamp(),
         status: 'requested' as BookingStatus,
         statusHistory: [{ status: 'requested', at: now }],
@@ -183,7 +192,6 @@ export function makeFirestoreDriver(): DataDriver {
         otherRequest: input.otherRequest ?? null,
         preferredDate: input.preferredDate ?? null,
       });
-      await upsertCustomer({ name: input.customer.name, phone: input.customer.phone, vehicle: input.vehicle });
       return {
         id: docRef.id,
         createdAt: now,

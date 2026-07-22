@@ -357,7 +357,10 @@ export function blankJobcard(id: string): Jobcard {
   };
 }
 
-function genId(prefix: string): string {
+/** Shared by BOTH drivers so live and demo booking IDs have the identical `bk_...`
+    shape the Track form promises ("Looks like bk_xxxxxxxx") — the live driver used
+    to let Firestore auto-generate 20-char doc IDs, which made that hint a lie. */
+export function genId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
 }
 
@@ -465,7 +468,8 @@ function currentActorId(): string {
   return s.role === 'admin' ? 'admin' : (s.employeeId ?? 'unknown');
 }
 
-/** Auto-upsert helper shared by createBooking + saveJobcard (Wave 2 customer registry). */
+/** Auto-upsert into the customer registry — called ONLY from saveJobcard (admin
+    context), mirroring the live driver where /customers is admin-only. */
 function upsertCustomer(input: {
   name: string;
   phone: string;
@@ -516,7 +520,10 @@ export const localDriver: DataDriver = {
     };
     bookings[id] = booking;
     writeStore(LOCAL_KEYS.bookings, bookings);
-    upsertCustomer({ name: input.customer.name, phone: input.customer.phone, vehicle: input.vehicle });
+    // NO customer upsert here: the customer registry grows on the admin-side
+    // saveJobcard path only. The customer app has no permission to write
+    // /customers on live (rules: admin-only) — it failed silently there while
+    // working in demo, so both drivers now skip it for parity.
     return booking;
   },
 
