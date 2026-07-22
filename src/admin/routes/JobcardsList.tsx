@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Jobcard, JobcardStatus } from '../../shared/types';
-import { driver, useEmployees, useJobcards } from '../lib/useDriver';
+import type { Employee, Jobcard, JobcardStatus } from '../../shared/types';
+import { driver, useEmployees, useJobcards, useWorkItems } from '../lib/useDriver';
 import { navigate, useRoute } from '../lib/router';
 import { formatDate, inr } from '../lib/format';
 import { monthKey, monthLabel } from '../lib/dates';
@@ -17,21 +17,73 @@ import {
 import { useOptimisticAction } from '../lib/useOptimisticAction';
 import { loadPref, savePref } from '../lib/persist';
 import { SERVICE_CATALOG } from '../../shared/catalog';
+import { employeeColor } from '../../shared/colors';
+import { jobcardProgressByJobcard, type JobcardProgress } from '../lib/progress';
 import {
   ActionMenu,
   Badge,
   BulkBar,
   Button,
   Checkbox,
+  ColorDot,
   EmptyState,
   Panel,
+  ProgressBar,
   ReasonDialog,
+  Select,
   SectionHeading,
   Spinner,
   TextInput,
   useToast,
   type ActionMenuItem,
 } from '../ui';
+
+// docs/WAVE5_SPEC.md section C — persisted per-route sort control.
+type JobcardSort = 'newest' | 'oldest' | 'balance-desc' | 'updated-desc';
+const JOBCARD_SORTS: JobcardSort[] = ['newest', 'oldest', 'balance-desc', 'updated-desc'];
+const JOBCARD_SORT_LABEL: Record<JobcardSort, string> = {
+  newest: 'Newest',
+  oldest: 'Oldest',
+  'balance-desc': 'Highest Balance Due',
+  'updated-desc': 'Recently Updated',
+};
+const SORT_PREF_KEY = 'jobcards.sort';
+
+function sortJobcards(list: Jobcard[], sort: JobcardSort): Jobcard[] {
+  const arr = [...list];
+  switch (sort) {
+    case 'newest':
+      arr.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+      break;
+    case 'oldest':
+      arr.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+      break;
+    case 'balance-desc':
+      arr.sort((a, b) => (b.pricing.balanceDue || 0) - (a.pricing.balanceDue || 0));
+      break;
+    case 'updated-desc':
+      arr.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+      break;
+  }
+  return arr;
+}
+
+/** Month-group headers (section C) — only meaningful for the two date-based sorts. */
+function groupByMonth(list: Jobcard[]): { key: string; label: string; items: Jobcard[] }[] {
+  const groups: { key: string; label: string; items: Jobcard[] }[] = [];
+  const byKey = new Map<string, number>(); // key -> index into groups
+  for (const j of list) {
+    const k = monthKey(j.date);
+    const idx = byKey.get(k);
+    if (idx === undefined) {
+      byKey.set(k, groups.length);
+      groups.push({ key: k, label: monthLabel(k), items: [j] });
+    } else {
+      groups[idx].items.push(j);
+    }
+  }
+  return groups;
+}
 
 const LABEL_BY_ID = new Map(SERVICE_CATALOG.map((s) => [s.id, s.label]));
 
@@ -68,11 +120,18 @@ function matchesPay(jc: Jobcard, pay: PayFilter): boolean {
 export default function JobcardsList() {
   const jobcards = useJobcards();
   const employees = useEmployees();
+  const workItems = useWorkItems();
   const route = useRoute();
   const toast = useToast();
   const optimistic = useOptimisticAction();
 
+  const progressByJobcard = useMemo(
+    () => jobcardProgressByJobcard(jobcards ?? [], workItems ?? []),
+    [jobcards, workItems]
+  );
+
   const [q, setQ] = useState('');
+  const [sort, setSort] = useState<JobcardSort>(() => loadPref(SORT_PREF_KEY, 'newest') as JobcardSort);
   const [pay, setPay] = useState<PayFilter>(() => {
     const fromQuery = route.query.pay as PayFilter | undefined;
     if (fromQuery && PAY_FILTERS.includes(fromQuery)) return fromQuery;
@@ -123,6 +182,10 @@ export default function JobcardsList() {
     savePref(STATUS_TAB_PREF_KEY, statusTab);
   }, [statusTab]);
 
+  useEffect(() => {
+    savePref(SORT_PREF_KEY, sort);
+  }, [sort]);
+
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: jobcards?.length ?? 0 };
     for (const j of jobcards ?? []) c[j.payment.status] = (c[j.payment.status] ?? 0) + 1;
@@ -145,7 +208,7 @@ export default function JobcardsList() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return (jobcards ?? [])
+    const list = (jobcards ?? [])
       .filter((j) => matchesPay(j, pay))
       .filter((j) => (month ? monthKey(j.date) === month : true))
       .filter((j) => (service ? j.services.some((s) => s.serviceId === service) : true))
@@ -159,12 +222,19 @@ export default function JobcardsList() {
           j.customer.name.toLowerCase().includes(needle)
         );
       });
-  }, [jobcards, q, pay, month, service, assignee]);
+    return sortJobcards(list, sort);
+  }, [jobcards, q, pay, month, service, assignee, sort]);
 
   // Mobile list = all the above filters + the lifecycle status tab.
   const mobileList = useMemo(
     () => filtered.filter((j) => (statusTab === 'all' ? true : j.status === statusTab)),
     [filtered, statusTab]
+  );
+
+  // docs/WAVE5_SPEC.md section C — month grouping headers, only for the two date-based sorts.
+  const mobileGroups = useMemo(
+    () => (sort === 'newest' || sort === 'oldest' ? groupByMonth(mobileList) : null),
+    [mobileList, sort]
   );
 
   async function newWalkIn() {
@@ -314,13 +384,29 @@ export default function JobcardsList() {
       />
 
       <div className="mt-4 flex flex-col gap-3">
-        <TextInput
-          type="search"
-          placeholder="Search by invoice no, phone, reg, or name…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          aria-label="Search job cards"
-        />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <TextInput
+            type="search"
+            placeholder="Search by invoice no, phone, reg, or name…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            aria-label="Search job cards"
+            className="flex-1"
+          />
+          {/* docs/WAVE5_SPEC.md section C — persisted sort control. */}
+          <Select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as JobcardSort)}
+            aria-label="Sort job cards"
+            className="sm:w-56"
+          >
+            {JOBCARD_SORTS.map((s) => (
+              <option key={s} value={s}>
+                Sort: {JOBCARD_SORT_LABEL[s]}
+              </option>
+            ))}
+          </Select>
+        </div>
 
         {/* Mobile: lifecycle-status tabs (kanban is a desktop win) — reuses BookingsInbox's
             mobile-tab-fallback pattern. */}
@@ -460,6 +546,8 @@ export default function JobcardsList() {
                 selected={selected}
                 onToggleSelect={toggleSelect}
                 actionItems={actionItems}
+                employees={employees ?? []}
+                progressByJobcard={progressByJobcard}
               />
             </div>
 
@@ -467,6 +555,29 @@ export default function JobcardsList() {
             <div className="md:hidden">
               {mobileList.length === 0 ? (
                 <EmptyState title="No matching job cards" hint="Try clearing the search or switching tabs." />
+              ) : mobileGroups ? (
+                <div className="flex flex-col gap-4">
+                  {mobileGroups.map((g) => (
+                    <div key={g.key}>
+                      <p className="mb-2 font-ui text-[0.65rem] font-semibold uppercase tracking-wider text-white/40">
+                        {g.label}
+                      </p>
+                      <ul className="flex flex-col gap-2">
+                        {g.items.map((j) => (
+                          <JobcardRow
+                            key={j.id}
+                            jobcard={j}
+                            selected={selected.has(j.id)}
+                            onToggleSelect={() => toggleSelect(j.id)}
+                            actionItems={actionItems(j)}
+                            employees={employees ?? []}
+                            progress={progressByJobcard.get(j.id) ?? null}
+                          />
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <ul className="flex flex-col gap-2">
                   {mobileList.map((j) => (
@@ -476,6 +587,8 @@ export default function JobcardsList() {
                       selected={selected.has(j.id)}
                       onToggleSelect={() => toggleSelect(j.id)}
                       actionItems={actionItems(j)}
+                      employees={employees ?? []}
+                      progress={progressByJobcard.get(j.id) ?? null}
                     />
                   ))}
                 </ul>
@@ -540,12 +653,16 @@ function StatusKanbanBoard({
   selected,
   onToggleSelect,
   actionItems,
+  employees,
+  progressByJobcard,
 }: {
   jobcards: Jobcard[];
   showVoid: boolean;
   selected: Set<string>;
   onToggleSelect: (id: string) => void;
   actionItems: (j: Jobcard) => ActionMenuItem[];
+  employees: Employee[];
+  progressByJobcard: Map<string, JobcardProgress>;
 }) {
   const columns: JobcardStatus[] = showVoid ? [...JOBCARD_FLOW, 'void'] : JOBCARD_FLOW;
   const byStatus = useMemo(() => {
@@ -578,6 +695,8 @@ function StatusKanbanBoard({
                     selected={selected.has(j.id)}
                     onToggleSelect={() => onToggleSelect(j.id)}
                     actionItems={actionItems(j)}
+                    employees={employees}
+                    progress={progressByJobcard.get(j.id) ?? null}
                   />
                 ))
               )}
@@ -589,16 +708,39 @@ function StatusKanbanBoard({
   );
 }
 
+/** Small row of colour dots — one per employee in Jobcard.assignedTo (section A). */
+function AssigneeDots({ assignedTo, employees }: { assignedTo: string[] | undefined; employees: Employee[] }) {
+  if (!assignedTo || assignedTo.length === 0) return null;
+  return (
+    <div className="flex items-center gap-1" title={`Assigned: ${assignedTo.length}`}>
+      {assignedTo.map((empId) => {
+        const emp = employees.find((e) => e.id === empId) ?? null;
+        return (
+          <ColorDot
+            key={empId}
+            color={employeeColor(emp, employees)}
+            label={emp ? emp.name || emp.loginId : 'Unknown employee'}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 function JobcardKanbanCard({
   jobcard: j,
   selected,
   onToggleSelect,
   actionItems,
+  employees,
+  progress,
 }: {
   jobcard: Jobcard;
   selected: boolean;
   onToggleSelect: () => void;
   actionItems: ActionMenuItem[];
+  employees: Employee[];
+  progress: JobcardProgress | null;
 }) {
   return (
     <Panel as="div" className="p-0">
@@ -615,6 +757,7 @@ function JobcardKanbanCard({
               {j.invoiceNumber || 'Unsaved'}
             </span>
             {j.status === 'void' && <Badge tone={JOBCARD_STATUS_TONE.void}>Voided</Badge>}
+            <AssigneeDots assignedTo={j.assignedTo} employees={employees} />
           </div>
           <p className="mt-0.5 truncate font-body text-xs text-white/50">
             {j.customer.name || 'Unnamed'} · {j.vehicle.regNumber || 'No reg'}
@@ -623,6 +766,8 @@ function JobcardKanbanCard({
             <Badge tone={PAYMENT_STATUS_TONE[j.payment.status]}>{PAYMENT_STATUS_LABEL[j.payment.status]}</Badge>
             <span className="font-ui text-xs font-semibold text-white/80">{inr(j.pricing.totalAmount)}</span>
           </div>
+          {/* docs/WAVE5_SPEC.md section D — zero work items renders no bar at all. */}
+          {progress && <ProgressBar done={progress.done} total={progress.total} className="mt-1.5" />}
         </button>
         <ActionMenu items={actionItems} label={`Actions for ${j.invoiceNumber || 'job card'}`} />
       </div>
@@ -637,11 +782,15 @@ function JobcardRow({
   selected,
   onToggleSelect,
   actionItems,
+  employees,
+  progress,
 }: {
   jobcard: Jobcard;
   selected: boolean;
   onToggleSelect: () => void;
   actionItems: ActionMenuItem[];
+  employees: Employee[];
+  progress: JobcardProgress | null;
 }) {
   return (
     <li>
@@ -661,11 +810,13 @@ function JobcardRow({
                 <Badge tone={PAYMENT_STATUS_TONE[j.payment.status]}>
                   {PAYMENT_STATUS_LABEL[j.payment.status]}
                 </Badge>
+                <AssigneeDots assignedTo={j.assignedTo} employees={employees} />
               </div>
               <p className="mt-0.5 truncate font-body text-xs text-white/60">
                 {j.customer.name || 'Unnamed'} · {j.vehicle.regNumber || 'No reg'} ·{' '}
                 {j.vehicle.makeModel || 'Vehicle n/a'}
               </p>
+              {progress && <ProgressBar done={progress.done} total={progress.total} className="mt-1.5 max-w-[200px]" />}
             </div>
             <div className="shrink-0 text-left sm:text-right">
               <p className="font-ui text-sm font-semibold text-white">{inr(j.pricing.totalAmount)}</p>

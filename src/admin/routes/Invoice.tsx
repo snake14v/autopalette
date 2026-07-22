@@ -9,14 +9,14 @@ import { Button, EmptyState, Spinner } from '../ui';
 
 const LABEL_BY_ID = new Map(SERVICE_CATALOG.map((s) => [s.id, s.label]));
 
-// Studio identity — CONTACT POLICY: two phone numbers + WhatsApp only. NO email anywhere.
+// Studio identity — CONTACT POLICY (owner directive 2026-07-22): one number for call +
+// WhatsApp, plus the studio email. The old second number is retired — never reintroduce.
 const STUDIO = {
   name: 'Autopalette',
   tagline: "We don't detail. We perfect.",
   address: 'JP Nagar 9th Phase, Bengaluru 560108',
-  phone1: '+91 88844 71117',
-  phone2: '+91 99000 12090',
-  whatsapp: '+91 99000 12090',
+  phone: '+91 88844 71117',
+  email: 'autopalette23@gmail.com',
   site: 'autopalette.in',
 };
 
@@ -84,10 +84,8 @@ function InvoiceSheet({ jc }: { jc: Jobcard }) {
             </div>
             <div className="text-right text-[0.72rem] leading-relaxed text-[#444]">
               <p>{STUDIO.address}</p>
-              <p>
-                {STUDIO.phone1} · {STUDIO.phone2}
-              </p>
-              <p>WhatsApp {STUDIO.whatsapp}</p>
+              <p>{STUDIO.phone} (Call &amp; WhatsApp)</p>
+              <p>{STUDIO.email}</p>
               <p className="font-medium text-[#1a1a1a]">{STUDIO.site}</p>
             </div>
           </header>
@@ -134,6 +132,10 @@ function InvoiceSheet({ jc }: { jc: Jobcard }) {
                 label="Odometer"
                 value={jc.vehicle.odometer != null ? `${jc.vehicle.odometer} km` : '—'}
               />
+              {/* docs/WAVE5_SPEC.md section B — vehicle depth, shown only when present. */}
+              {jc.vehicle.year != null && <Line label="Year" value={String(jc.vehicle.year)} />}
+              {jc.vehicle.color && <Line label="Colour" value={jc.vehicle.color} />}
+              {jc.vehicle.vin && <Line label="VIN" value={jc.vehicle.vin} />}
             </BlockCard>
           </div>
 
@@ -268,8 +270,8 @@ function InvoiceSheet({ jc }: { jc: Jobcard }) {
 
           {/* Footer */}
           <footer className="inv-accent-rule mt-8 pt-3 text-center text-[0.65rem] text-[#888]">
-            Thank you for choosing {STUDIO.name}. · {STUDIO.address} · {STUDIO.phone1} ·{' '}
-            {STUDIO.site}
+            Thank you for choosing {STUDIO.name}. · {STUDIO.address} · {STUDIO.phone} ·{' '}
+            {STUDIO.email} · {STUDIO.site}
           </footer>
         </article>
       </div>

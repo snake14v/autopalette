@@ -196,6 +196,30 @@ export function normalizeJobcardStatus(jc: Jobcard): Jobcard {
 }
 
 // ---------------------------------------------------------------------------------------
+// Customer-safe stage mirror (docs/WAVE5_SPEC.md section D — fixes CX-audit finding #5).
+// Denormalizes a coarse, customer-facing stage onto the linked Booking whenever the admin
+// moves a Jobcard's lifecycle status — instead of loosening firestore.rules to let the
+// customer app read jobcards directly. Shared here (not duplicated per driver) for the same
+// reason JOBCARD_FLOW/assertValidJobcardTransition are shared: the mapping can never drift
+// between demo and live.
+// ---------------------------------------------------------------------------------------
+
+/** The three coarse stages the customer app is ever shown (see Booking.jobcardStage). */
+export type BookingJobcardStage = 'working' | 'quality_check' | 'ready';
+
+/**
+ * Maps an admin-only JobcardStatus onto the Booking.jobcardStage the customer app may read,
+ * or null when no stage should be shown (open/closed/void — field removed in that case).
+ * Called by BOTH drivers' setJobcardStatus, right after the status transition itself commits.
+ */
+export function jobcardStageForBookingMirror(status: JobcardStatus): BookingJobcardStage | null {
+  if (status === 'in_progress') return 'working';
+  if (status === 'quality_check') return 'quality_check';
+  if (status === 'completed') return 'ready';
+  return null; // open / closed / void -> no stage to show
+}
+
+// ---------------------------------------------------------------------------------------
 // Wave 2 auth shape
 // ---------------------------------------------------------------------------------------
 
@@ -245,6 +269,12 @@ export interface DataDriver {
 
   createJobcardFromBooking(bookingId: string): Promise<Jobcard>;
   createBlankJobcard(): Promise<Jobcard>;
+  /**
+   * Wave 5 — same as createBlankJobcard, but prefilled with a customer + vehicle (e.g. the
+   * CustomerDetail "New job card" quick action). No invoice number is allocated here either —
+   * that still happens lazily on the editor's first saveJobcard, exactly like a walk-in.
+   */
+  createBlankJobcardFor(customer: Jobcard['customer'], vehicle: Jobcard['vehicle']): Promise<Jobcard>;
   saveJobcard(jc: Jobcard): Promise<Jobcard>;
   getJobcard(id: string): Promise<Jobcard | null>;
   subscribeJobcards(cb: (jobcards: Jobcard[]) => void): () => void;
@@ -610,11 +640,22 @@ export const localDriver: DataDriver = {
     return jc;
   },
 
+  async createBlankJobcardFor(customer, vehicle) {
+    const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
+    const id = genId('jc');
+    const jc = blankJobcard(id);
+    jc.customer = customer;
+    jc.vehicle = vehicle;
+    jobcards[id] = jc;
+    writeStore(LOCAL_KEYS.jobcards, jobcards);
+    return jc;
+  },
+
   async saveJobcard(jc) {
     const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
     const pricing = computeJobcardPricing(jc.services, jc.pricing);
     const invoiceNumber = jc.invoiceNumber || nextInvoiceNumber();
-    const saved: Jobcard = { ...jc, pricing, invoiceNumber };
+    const saved: Jobcard = { ...jc, pricing, invoiceNumber, updatedAt: Date.now() };
     jobcards[jc.id] = saved;
     writeStore(LOCAL_KEYS.jobcards, jobcards);
     upsertCustomer({ name: saved.customer.name, phone: saved.customer.phone, vehicle: saved.vehicle });
@@ -631,7 +672,11 @@ export const localDriver: DataDriver = {
     const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
     const jc = jobcards[id];
     if (!jc) throw new Error(`Job card ${id} not found`);
+    const from = jc.payment.status;
     jc.payment = { ...jc.payment, status };
+    if (from !== status) {
+      jc.paymentHistory = [...(jc.paymentHistory ?? []), { at: Date.now(), from, to: status }];
+    }
     jobcards[id] = jc;
     writeStore(LOCAL_KEYS.jobcards, jobcards);
   },
@@ -676,6 +721,20 @@ export const localDriver: DataDriver = {
     };
     jobcards[id] = updated;
     writeStore(LOCAL_KEYS.jobcards, jobcards);
+
+    // docs/WAVE5_SPEC.md section D — admin-side customer-safe stage mirror onto the linked
+    // booking. `undefined` (not written) when the mapping is null, which JSON.stringify drops
+    // from storage — functionally "field removed" for closed/void/open.
+    if (updated.bookingId) {
+      const bookings = readStore<Booking>(LOCAL_KEYS.bookings);
+      const booking = bookings[updated.bookingId];
+      if (booking) {
+        const stage = jobcardStageForBookingMirror(status);
+        bookings[updated.bookingId] = { ...booking, jobcardStage: stage ?? undefined };
+        writeStore(LOCAL_KEYS.bookings, bookings);
+      }
+    }
+
     return updated;
   },
 
@@ -759,6 +818,7 @@ export const localDriver: DataDriver = {
       notes: [],
       estHours: input.estHours,
       hoursLogged: 0,
+      createdAt: Date.now(),
     };
     items[id] = wi;
     writeStore(LOCAL_KEYS.workItems, items);
@@ -788,6 +848,7 @@ export const localDriver: DataDriver = {
     const item = items[id];
     if (!item) throw new Error(`Work item ${id} not found`);
     item.status = 'confirmed';
+    item.confirmedAt = Date.now();
     items[id] = item;
     writeStore(LOCAL_KEYS.workItems, items);
   },

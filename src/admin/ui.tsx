@@ -146,6 +146,60 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
   }
 );
 
+// --- ColorDot (employee colour coding — docs/WAVE5_SPEC.md section A) -------------------
+
+/** Small solid-colour dot — the visual unit every employeeColor() call site renders. */
+export function ColorDot({
+  color,
+  className = '',
+  label,
+}: {
+  color: string;
+  className?: string;
+  /** Accessible label — visually hidden but read by assistive tech, when the dot stands alone. */
+  label?: string;
+}) {
+  return (
+    <span
+      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${className}`}
+      style={{ backgroundColor: color }}
+      aria-hidden={label ? undefined : true}
+      role={label ? 'img' : undefined}
+      aria-label={label}
+    />
+  );
+}
+
+// --- ProgressBar (per-jobcard work-item progress — docs/WAVE5_SPEC.md section D) --------
+
+/**
+ * Slim "N of M tasks done" progress bar. The caller is responsible for not rendering this at
+ * all when there are zero work items (derived, never a fake 0% — see jobcardProgress()).
+ */
+export function ProgressBar({
+  done,
+  total,
+  className = '',
+  tone = 'bg-pinstripe-emerald/70',
+}: {
+  done: number;
+  total: number;
+  className?: string;
+  tone?: string;
+}) {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/8" aria-hidden="true">
+        <div className={`h-full rounded-full transition-all ${tone}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="shrink-0 font-body text-[0.65rem] text-white/45">
+        {done}/{total} tasks
+      </span>
+    </div>
+  );
+}
+
 // --- Badge ------------------------------------------------------------------------------
 
 export function Badge({ tone, children }: { tone: string; children: ReactNode }) {

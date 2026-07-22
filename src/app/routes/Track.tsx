@@ -4,7 +4,7 @@ import { Shell } from '../components/Shell';
 import { Button } from '../components/Button';
 import { StatusChip } from '../components/StatusChip';
 import { StatusTimeline } from '../components/StatusTimeline';
-import { WorkshopUpdates } from '../components/WorkshopUpdates';
+import { WorkshopUpdates, StageProgressBar } from '../components/WorkshopUpdates';
 import { Field, inputClass } from '../components/Field';
 import { CarIcon, AlertIcon, CopyIcon, CheckIcon } from '../components/icons';
 import { SERVICE_CATALOG } from '../../shared/catalog';
@@ -202,8 +202,9 @@ function TrackedBooking({ booking }: { booking: Booking }) {
       <h2 className="mb-4 font-ui text-sm font-semibold uppercase tracking-wide text-white/50">
         Progress
       </h2>
+      <StageProgressBar booking={booking} />
       <StatusTimeline booking={booking} />
-      <WorkshopUpdates bookingId={booking.id} jobcardId={booking.jobcardId} />
+      <WorkshopUpdates booking={booking} />
     </div>
   );
 }

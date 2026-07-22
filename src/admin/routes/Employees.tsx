@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import type { Employee } from '../../shared/types';
 import { driver, isDemo, useEmployees, useWorkItems } from '../lib/useDriver';
+import { EMPLOYEE_PALETTE, employeeColor } from '../../shared/colors';
 import {
   Badge,
   Button,
+  ColorDot,
   EmptyState,
   Field,
   Modal,
@@ -87,6 +89,10 @@ export default function Employees() {
                 <Panel as="div" className="flex flex-wrap items-center justify-between gap-3 p-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
+                      <ColorDot
+                        color={employeeColor(emp, employees ?? [])}
+                        label={`${emp.name || emp.loginId}'s colour`}
+                      />
                       <span className="font-ui text-sm font-semibold text-white">
                         {emp.name || 'Unnamed'}
                       </span>
@@ -126,6 +132,7 @@ export default function Employees() {
         <EmployeeForm
           employee={editing}
           nextLoginId={nextLoginId}
+          roster={employees ?? []}
           onClose={() => {
             setCreating(false);
             setEditing(null);
@@ -139,10 +146,13 @@ export default function Employees() {
 function EmployeeForm({
   employee,
   nextLoginId,
+  roster,
   onClose,
 }: {
   employee: Employee | null;
   nextLoginId: string;
+  /** Full roster (unfiltered) — used to auto-assign a colour by position when none is set. */
+  roster: Employee[];
   onClose: () => void;
 }) {
   const toast = useToast();
@@ -151,6 +161,10 @@ function EmployeeForm({
   const [phone, setPhone] = useState(employee?.phone ?? '');
   const [pin, setPin] = useState(employee?.pin ?? '');
   const [active, setActive] = useState(employee?.active ?? true);
+  // docs/WAVE5_SPEC.md section A — swatch picker. Defaults to the same auto-assigned colour
+  // shown elsewhere (employeeColor()) so opening the picker never looks like a change until
+  // the admin actually picks a different swatch.
+  const [color, setColor] = useState(employee?.color ?? employeeColor(employee, roster));
   const [busy, setBusy] = useState(false);
 
   const loginId = employee?.loginId ?? nextLoginId;
@@ -166,6 +180,7 @@ function EmployeeForm({
         phone: phone.trim() || undefined,
         active,
         pin: isDemo ? (pin.trim() || undefined) : employee?.pin,
+        color,
       };
       await driver.saveEmployee(rec);
       toast(isNew ? 'Employee added' : 'Employee updated');
@@ -218,6 +233,28 @@ function EmployeeForm({
             )}
           </Field>
         )}
+        <div>
+          <p className="font-ui text-xs font-medium uppercase tracking-wider text-white/60">Colour</p>
+          <p className="mt-1 font-body text-[0.7rem] text-white/40">
+            Shown on the Day Board, My Day, job cards, and kanban assignee dots.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Employee colour">
+            {EMPLOYEE_PALETTE.map((swatch) => (
+              <button
+                key={swatch}
+                type="button"
+                role="radio"
+                aria-checked={color === swatch}
+                aria-label={swatch}
+                onClick={() => setColor(swatch)}
+                className={`h-8 w-8 rounded-full border-2 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${
+                  color === swatch ? 'scale-110 border-white' : 'border-transparent hover:scale-105'
+                }`}
+                style={{ backgroundColor: swatch }}
+              />
+            ))}
+          </div>
+        </div>
         <Toggle checked={active} onChange={setActive} label="Active" hint="Inactive employees can't sign in." />
         <div className="mt-1 flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>

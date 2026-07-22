@@ -15,6 +15,9 @@ import { navigate, setNavGuard } from '../lib/router';
 import { fmtHours, todayISO } from '../lib/dates';
 import { formatTimestamp, inr } from '../lib/format';
 import { customerWhatsappLink, paymentNudgeText } from '../lib/whatsapp';
+import { employeeColor } from '../../shared/colors';
+import { jobcardProgress } from '../lib/progress';
+import { buildJobcardTimeline } from '../lib/timeline';
 import {
   JOBCARD_NEXT_ACTION_LABEL,
   JOBCARD_STATUS_LABEL,
@@ -25,9 +28,11 @@ import {
 import {
   Badge,
   Button,
+  ColorDot,
   EmptyState,
   Field,
   Panel,
+  ProgressBar,
   ReasonDialog,
   SectionHeading,
   Select,
@@ -80,6 +85,20 @@ export default function JobcardEditor({ id }: { id: string }) {
   const [saving, setSaving] = useState(false);
   const [booking, setBooking] = useState<Booking | null>(null);
   const loadedId = useRef<string | null>(null);
+
+  // docs/WAVE5_SPEC.md sections B + D — the merged activity timeline and the per-jobcard
+  // progress bar both derive from this job card's linked work items + the roster (for colour
+  // dots). Fetched once here and threaded down, rather than each panel re-subscribing.
+  const workItems = useWorkItems();
+  const employees = useEmployees();
+  const progress = useMemo(
+    () => (workItems ? jobcardProgress(id, workItems) : null),
+    [workItems, id]
+  );
+  const timeline = useMemo(
+    () => (draft && workItems ? buildJobcardTimeline(draft, workItems) : []),
+    [draft, workItems]
+  );
 
   // --- lifecycle panel state (docs/JOBCARD_LIFECYCLE_SPEC.md) — deliberately separate from
   // `draft`/`dirty`/the billing Save button: check-in/QC/delivery persist via their own
@@ -375,6 +394,7 @@ export default function JobcardEditor({ id }: { id: string }) {
           which stay exactly as they were. */}
       <LifecycleStrip
         jc={draft}
+        progress={progress}
         transitioning={transitioning}
         qcAllPassed={qcAllPassed}
         qcOverrideFilled={qcOverrideReason.trim().length > 0}
@@ -386,6 +406,12 @@ export default function JobcardEditor({ id }: { id: string }) {
         onReopen={() => setReopenOpen(true)}
         onVoid={() => setVoidOpen(true)}
       />
+
+      {/* Activity timeline (docs/WAVE5_SPEC.md section B) — merged chronological view: status
+          changes, payment changes, and linked work-item events, each with its own dot. */}
+      {timeline.length > 0 && (
+        <ActivityTimelinePanel timeline={timeline} employees={employees ?? []} />
+      )}
 
       {/* Check-in panel — shown while open; optional, never blocks Start Work. */}
       {draft.status === 'open' && (
@@ -514,6 +540,42 @@ export default function JobcardEditor({ id }: { id: string }) {
                       (d.vehicle.odometer = e.target.value === '' ? undefined : num(e.target.value))
                   )
                 }
+              />
+            )}
+          </Field>
+          {/* docs/WAVE5_SPEC.md section B — vehicle depth: optional year/color/VIN. */}
+          <Field label="Year">
+            {(fid) => (
+              <TextInput
+                id={fid}
+                type="number"
+                inputMode="numeric"
+                min={1900}
+                max={2100}
+                value={draft.vehicle.year ?? ''}
+                onChange={(e) =>
+                  patch((d) => (d.vehicle.year = e.target.value === '' ? undefined : num(e.target.value)))
+                }
+              />
+            )}
+          </Field>
+          <Field label="Colour">
+            {(fid) => (
+              <TextInput
+                id={fid}
+                value={draft.vehicle.color ?? ''}
+                placeholder="e.g. Pearl White"
+                onChange={(e) => patch((d) => (d.vehicle.color = e.target.value))}
+              />
+            )}
+          </Field>
+          <Field label="VIN / Chassis No.">
+            {(fid) => (
+              <TextInput
+                id={fid}
+                value={draft.vehicle.vin ?? ''}
+                className="uppercase"
+                onChange={(e) => patch((d) => (d.vehicle.vin = e.target.value.toUpperCase()))}
               />
             )}
           </Field>
@@ -973,6 +1035,7 @@ const FUEL_LEVELS: NonNullable<JobcardCheckIn['fuelLevel']>[] = ['E', '1/4', '1/
 
 function LifecycleStrip({
   jc,
+  progress,
   transitioning,
   qcAllPassed,
   qcOverrideFilled,
@@ -985,6 +1048,8 @@ function LifecycleStrip({
   onVoid,
 }: {
   jc: Jobcard;
+  /** docs/WAVE5_SPEC.md section D — null when the jobcard has zero work items (no bar). */
+  progress: { done: number; total: number } | null;
   transitioning: boolean;
   qcAllPassed: boolean;
   qcOverrideFilled: boolean;
@@ -1031,6 +1096,7 @@ function LifecycleStrip({
             Lifecycle
           </span>
           <Badge tone={JOBCARD_STATUS_TONE[jc.status]}>{JOBCARD_STATUS_LABEL[jc.status]}</Badge>
+          {progress && <ProgressBar done={progress.done} total={progress.total} className="w-32" />}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {canReopen && (
@@ -1079,6 +1145,58 @@ function LifecycleStrip({
           </ol>
         </details>
       )}
+    </Panel>
+  );
+}
+
+// --- Activity timeline (docs/WAVE5_SPEC.md section B) -----------------------------------
+
+function ActivityTimelinePanel({
+  timeline,
+  employees,
+}: {
+  timeline: import('../lib/timeline').TimelineEvent[];
+  employees: Employee[];
+}) {
+  return (
+    <Panel className="mt-4 p-4">
+      <SectionHeading eyebrow="Wave 5" title="Activity Timeline" />
+      <p className="mt-1 font-body text-xs text-white/45">
+        Status changes, payment changes, and work-item events, merged chronologically.
+      </p>
+      <ol className="mt-3 flex flex-col gap-2">
+        {[...timeline].reverse().map((e) => {
+          const employee = e.employeeId ? employees.find((emp) => emp.id === e.employeeId) : null;
+          return (
+            <li
+              key={e.key}
+              className="flex items-start gap-2.5 rounded-lg border border-white/10 bg-char3/50 px-3 py-2"
+            >
+              {e.employeeId ? (
+                <ColorDot
+                  color={employeeColor(employee ?? null, employees)}
+                  className="mt-1.5"
+                  label={employee ? `${employee.name || employee.loginId}` : 'Unknown employee'}
+                />
+              ) : (
+                <span
+                  className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
+                    e.kind === 'payment' ? 'bg-pinstripe-cyan/70' : 'bg-goldBright/70'
+                  }`}
+                  aria-hidden="true"
+                />
+              )}
+              <div className="min-w-0">
+                <p className="font-body text-sm text-white/85">{e.label}</p>
+                <p className="mt-0.5 font-body text-[0.7rem] text-white/40">
+                  {formatTimestamp(e.at)}
+                  {e.detail && <span className="text-white/50"> · {e.detail}</span>}
+                </p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
     </Panel>
   );
 }
@@ -1395,19 +1513,23 @@ function ProjectAssignment({
         <div className="mt-3 flex flex-wrap gap-2">
           {active.map((emp) => {
             const on = assignedTo.includes(emp.id);
+            // docs/WAVE5_SPEC.md section A — assignedTo chips take the employee's own colour
+            // once selected, instead of the generic gold "on" state.
+            const color = employeeColor(emp, employees ?? []);
             return (
               <button
                 key={emp.id}
                 type="button"
                 aria-pressed={on}
                 onClick={() => onToggle(emp.id)}
-                className={`rounded-full border px-3 py-1.5 font-ui text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-ui text-xs font-medium transition-colors ${
                   on
-                    ? 'border-gold bg-gold/15 text-goldBright'
+                    ? 'text-white'
                     : 'border-white/15 text-white/60 hover:border-white/30 hover:text-white/85'
                 }`}
+                style={on ? { borderColor: color, backgroundColor: `${color}26` } : undefined}
               >
-                {on ? '✓ ' : ''}
+                <ColorDot color={color} />
                 {emp.name || emp.loginId}
               </button>
             );

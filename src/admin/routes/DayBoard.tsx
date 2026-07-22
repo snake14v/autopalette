@@ -6,9 +6,11 @@ import { fmtHours, isSameWeek, todayISO } from '../lib/dates';
 import { formatDate } from '../lib/format';
 import { WORKITEM_STATUS_LABEL, WORKITEM_STATUS_TONE } from '../lib/status';
 import { canEditWorkItem, editWorkItemLocal } from '../lib/workItemEdit';
+import { employeeColor } from '../../shared/colors';
 import {
   Badge,
   Button,
+  ColorDot,
   EmptyState,
   Field,
   Modal,
@@ -142,11 +144,16 @@ function EmployeeColumn({
   const weekHours = allItems
     .filter((w) => w.assignedTo === employeeId && isSameWeek(w.date, date))
     .reduce((s, w) => s + (w.hoursLogged || 0), 0);
+  // docs/WAVE5_SPEC.md section D — Day Board load view: est-hours total vs logged, in the
+  // employee's colour. No estimate on any of today's items -> no bar (not a fake 0%).
+  const dayEstHours = items.reduce((s, w) => s + (w.estHours || 0), 0);
+  const color = employeeColor(employee, employees);
 
   return (
     <Panel as="div" className="p-4">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
+          <ColorDot color={color} label={employee ? `${employee.name || employee.loginId}'s colour` : undefined} />
           <span className="font-ui text-sm font-semibold text-white">
             {employee?.name || 'Unknown / removed'}
           </span>
@@ -168,12 +175,26 @@ function EmployeeColumn({
         </div>
       </div>
 
+      {dayEstHours > 0 && (
+        <div className="mt-2.5 flex items-center gap-2" title={`${fmtHours(dayHours)} logged of ${fmtHours(dayEstHours)} estimated`}>
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/5">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${Math.min(100, (dayHours / dayEstHours) * 100)}%`, backgroundColor: color }}
+            />
+          </div>
+          <span className="shrink-0 font-body text-[0.65rem] text-white/40">
+            {fmtHours(dayHours)} / {fmtHours(dayEstHours)} est
+          </span>
+        </div>
+      )}
+
       {items.length === 0 ? (
         <p className="mt-3 font-body text-sm text-white/40">No work assigned for this date.</p>
       ) : (
         <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {items.map((w) => (
-            <WorkItemCard key={w.id} item={w} employees={employees} />
+            <WorkItemCard key={w.id} item={w} employees={employees} color={color} />
           ))}
         </ul>
       )}
@@ -181,7 +202,16 @@ function EmployeeColumn({
   );
 }
 
-function WorkItemCard({ item, employees }: { item: WorkItem; employees: Employee[] }) {
+function WorkItemCard({
+  item,
+  employees,
+  color,
+}: {
+  item: WorkItem;
+  employees: Employee[];
+  /** The assigned employee's resolved colour (docs/WAVE5_SPEC.md section A) — left border. */
+  color: string;
+}) {
   const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -212,7 +242,10 @@ function WorkItemCard({ item, employees }: { item: WorkItem; employees: Employee
   const customerNotes = item.notes.filter((n) => n.customerVisible).length;
 
   return (
-    <li className="rounded-lg border border-white/10 bg-char3/60 p-3">
+    <li
+      className="rounded-lg border border-white/10 bg-char3/60 p-3 border-l-4"
+      style={{ borderLeftColor: color }}
+    >
       <div className="flex items-start justify-between gap-2">
         <p className="font-ui text-sm font-medium text-white/90">{item.title}</p>
         <Badge tone={WORKITEM_STATUS_TONE[item.status]}>{WORKITEM_STATUS_LABEL[item.status]}</Badge>

@@ -20,6 +20,12 @@ export interface Booking {
   otherRequest?: string; // free text
   preferredDate?: string; // ISO date
   jobcardId?: string; // set when admin opens a job card
+  // docs/WAVE5_SPEC.md section D — customer-safe stage mirror. Denormalized from the linked
+  // Jobcard's lifecycle status by the ADMIN-SIDE driver only (setJobcardStatus), so the
+  // customer app can show coarse workshop progress without ever reading jobcards directly
+  // (firestore.rules for jobcards stay admin/staff-only, unchanged). Absent/undefined = no
+  // stage to show (jobcard open, closed, void, or never linked).
+  jobcardStage?: 'working' | 'quality_check' | 'ready';
 }
 
 // docs/JOBCARD_LIFECYCLE_SPEC.md — the professional service-centre lifecycle. Additive to the
@@ -73,7 +79,16 @@ export interface Jobcard {
   date: string;
   bookingId?: string; // walk-ins allowed: jobcard without booking
   customer: { name: string; phone: string };
-  vehicle: { regNumber: string; makeModel: string; odometer?: number };
+  // docs/WAVE5_SPEC.md section B — vehicle depth: year/color/vin are optional, shown in the
+  // editor + invoice vehicle block only when present.
+  vehicle: {
+    regNumber: string;
+    makeModel: string;
+    odometer?: number;
+    year?: number;
+    color?: string;
+    vin?: string;
+  };
   services: { serviceId: string; label: string; qty: number; unitPrice: number }[];
   // Wave 2: an employee can be assigned the whole project (job card), in addition to /
   // instead of individual WorkItems. employeeId[] — project-level assignment.
@@ -97,6 +112,9 @@ export interface Jobcard {
     transactionId?: string;
     status: 'unpaid' | 'advance_paid' | 'paid';
   };
+  // docs/WAVE5_SPEC.md section B — payment-status changes, appended by setJobcardPaymentStatus.
+  // Additive: absent on job cards saved before this wave landed (treated as empty history).
+  paymentHistory?: { at: number; from: Jobcard['payment']['status']; to: Jobcard['payment']['status'] }[];
   warranty: { period?: string; terms?: string };
   remarks: {
     beforeAfterCondition?: string;
@@ -109,6 +127,9 @@ export interface Jobcard {
   checkIn?: JobcardCheckIn;
   qualityCheck?: JobcardQualityCheck;
   delivery?: JobcardDelivery;
+  // docs/WAVE5_SPEC.md section C — stamped on every saveJobcard call; powers the "recently
+  // updated" sort on JobcardsList. Additive: absent on job cards saved before this wave.
+  updatedAt?: number; // ms epoch
 }
 
 // ---------------------------------------------------------------------------------------
@@ -124,6 +145,10 @@ export interface Employee {
   active: boolean;
   /** DEMO MODE ONLY — live mode uses a Firebase account instead. Never present in live data. */
   pin?: string;
+  // docs/WAVE5_SPEC.md section A — hex colour, editable via a swatch picker in the roster
+  // editor. Absent = auto-assigned by roster order at render time (see employeeColor() in
+  // src/shared/colors.ts) — nothing is written until the admin explicitly picks one.
+  color?: string;
 }
 
 export interface WorkItemNote {
@@ -149,6 +174,11 @@ export interface WorkItem {
   finishedAt?: number; // ms epoch — stamped on transition to finished
   estHours?: number;
   hoursLogged: number; // auto-computed from startedAt→finishedAt; admin can override
+  // docs/WAVE5_SPEC.md section B — stamped by createWorkItem/confirmWorkItem respectively, so
+  // the jobcard activity timeline can place "assigned" and "confirmed" events chronologically
+  // alongside started/finished. Additive: absent on work items created before this wave.
+  createdAt?: number; // ms epoch
+  confirmedAt?: number; // ms epoch
 }
 
 export interface CustomerVehicle {

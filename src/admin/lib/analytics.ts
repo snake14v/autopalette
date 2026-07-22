@@ -3,7 +3,7 @@
 // to a saved Jobcard / WorkItem / Customer. Callers label each with its date range and show
 // "No data yet" empty states when the inputs are empty.
 
-import type { Customer, Jobcard, JobcardStatus, WorkItem } from '../../shared/types';
+import type { Customer, Employee, Jobcard, JobcardStatus, WorkItem } from '../../shared/types';
 import { SERVICE_CATALOG } from '../../shared/catalog';
 import { monthKey, monthKeyOffset, weekKey } from './dates';
 
@@ -134,6 +134,27 @@ export function hoursByWeek(
   }
   const sorted = [...byWeek.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return sorted.slice(-limit).map(([key, hours]) => ({ key, hours: Math.round(hours * 100) / 100 }));
+}
+
+/**
+ * docs/WAVE5_SPEC.md section A — "DataPanel hours rows": total hoursLogged per employee,
+ * all-time, desc by hours. Real recorded data only (per the honesty-gate discipline already
+ * governing this file) — an employee with zero logged hours simply doesn't appear.
+ */
+export function hoursByEmployee(
+  workItems: WorkItem[],
+  employees: Employee[]
+): { employee: Employee; hours: number }[] {
+  const byId = new Map<string, number>();
+  for (const wi of workItems) {
+    if (!wi.hoursLogged) continue;
+    byId.set(wi.assignedTo, (byId.get(wi.assignedTo) ?? 0) + wi.hoursLogged);
+  }
+  const empById = new Map(employees.map((e) => [e.id, e]));
+  return [...byId.entries()]
+    .map(([id, hours]) => ({ employee: empById.get(id), hours }))
+    .filter((r): r is { employee: Employee; hours: number } => Boolean(r.employee))
+    .sort((a, b) => b.hours - a.hours);
 }
 
 // --- per-customer roll-ups (Customers panel chips + detail) ------------------------------

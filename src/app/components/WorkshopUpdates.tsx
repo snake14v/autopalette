@@ -1,31 +1,20 @@
 import { useEffect, useState } from 'react';
-import type { WorkItemNote, Jobcard } from '../../shared/types';
+import type { WorkItemNote, Booking } from '../../shared/types';
 import { driver } from '../lib/driver';
 import { formatDateTime } from '../lib/format';
 
-/**
- * Job-card lifecycle statuses relevant to the customer view. Kept local (not imported)
- * because `JobcardStatus` doesn't exist on `src/shared/types.ts` yet — the values are
- * frozen verbatim by docs/JOBCARD_LIFECYCLE_SPEC.md, so this can be coded against ahead
- * of that field landing. Once it lands, `Jobcard['status']` will simply satisfy this
- * narrower local type.
- */
-type JobcardLifecycleStatus =
-  | 'open'
-  | 'in_progress'
-  | 'quality_check'
-  | 'completed'
-  | 'closed'
-  | 'void';
+type JobcardStage = NonNullable<Booking['jobcardStage']>;
 
 /**
- * The ONLY two milestone strings the customer may ever see for a job-card status change.
- * Never add QC checklist details, void status, or void/reopen reasons here — those stay
- * internal per docs/JOBCARD_LIFECYCLE_SPEC.md "Customer-app tie-in".
+ * The ONLY two milestone strings the customer may ever see for a job-card stage change.
+ * 'working' has no line of its own here — it exists only to drive the coarse progress
+ * indicator (see `StageProgressBar` below), never a standalone timeline entry. Never add QC
+ * checklist details, void status, or void/reopen reasons here — those stay internal per
+ * docs/JOBCARD_LIFECYCLE_SPEC.md "Customer-app tie-in".
  */
-const CUSTOMER_MILESTONE_COPY: Partial<Record<JobcardLifecycleStatus, string>> = {
+const STAGE_MILESTONE_COPY: Partial<Record<JobcardStage, string>> = {
   quality_check: 'Final quality check in progress',
-  completed: 'Ready for pickup',
+  ready: 'Ready for pickup',
 };
 
 interface TimelineEntry {
@@ -35,61 +24,50 @@ interface TimelineEntry {
 }
 
 /**
- * Chronological, admin-curated progress notes for a booking (customerVisible only),
- * plus an auto-generated milestone line when the linked job card reaches quality_check
- * or completed. Renders nothing when there's nothing to show — no empty-state noise.
+ * `booking.jobcardStage` is a point-in-time mirror (not an event log), so there's no real
+ * "changed at" timestamp to show. Rather than fabricate one (or silently reuse an unrelated
+ * timestamp), this records — once, per device, per stage — when THIS device first observed
+ * the milestone, purely to order it sensibly among the real-timestamped workshop notes.
  */
-export function WorkshopUpdates({
-  bookingId,
-  jobcardId,
-}: {
-  bookingId: string;
-  jobcardId?: string;
-}) {
+function firstSeenAt(bookingId: string, stage: JobcardStage): number {
+  const key = `ap:milestone-seen:${bookingId}:${stage}`;
+  try {
+    const existing = localStorage.getItem(key);
+    if (existing) return Number(existing);
+  } catch {
+    /* storage unavailable — fall through to "now" without persisting */
+  }
+  const now = Date.now();
+  try {
+    localStorage.setItem(key, String(now));
+  } catch {
+    /* ignore */
+  }
+  return now;
+}
+
+/**
+ * Chronological, admin-curated progress notes for a booking (customerVisible only), plus an
+ * auto-generated milestone line derived from `booking.jobcardStage` — a customer-safe field
+ * denormalized onto the booking by the admin-side driver whenever the linked job card's
+ * lifecycle status changes (docs/WAVE5_SPEC.md section D). This replaces the old getJobcard()
+ * read, which silently failed for every real customer under the live Firestore rules
+ * (`jobcards/{id}` reads are admin/staff only) — the customer app now reads only the booking
+ * it already has access to. Renders nothing when there's nothing to show.
+ */
+export function WorkshopUpdates({ booking }: { booking: Booking }) {
   const [notes, setNotes] = useState<WorkItemNote[]>([]);
-  const [milestone, setMilestone] = useState<TimelineEntry | null>(null);
 
   useEffect(() => {
-    return driver.subscribeCustomerNotes(bookingId, setNotes);
-  }, [bookingId]);
+    return driver.subscribeCustomerNotes(booking.id, setNotes);
+  }, [booking.id]);
 
-  useEffect(() => {
-    setMilestone(null);
-    if (!jobcardId) return;
-    let cancelled = false;
-
-    // NOTE: DataDriver has no live per-id jobcard subscription — this is a best-effort
-    // one-shot read via getJobcard, per the task's guidance. In live (Firestore) mode,
-    // firestore.rules currently scopes `jobcards/{id}` reads to admin/staff only, so an
-    // unauthenticated customer read here will reject; caught below and treated as "no
-    // milestone yet" rather than an error. Flagged as a real gap in the build report —
-    // needs either a customer-safe read path or a denormalized status mirrored onto the
-    // booking, added by whoever owns src/shared/data.ts + firestore.rules.
-    driver
-      .getJobcard(jobcardId)
-      .then((jc) => {
-        if (cancelled || !jc) return;
-        const status = (jc as Jobcard & { status?: JobcardLifecycleStatus }).status;
-        if (!status) return;
-        const text = CUSTOMER_MILESTONE_COPY[status];
-        if (!text) return; // only these two statuses ever produce a customer-visible line
-        const history = (
-          jc as Jobcard & { statusHistory?: { status: JobcardLifecycleStatus; at: number }[] }
-        ).statusHistory;
-        const at = history
-          ?.slice()
-          .reverse()
-          .find((h) => h.status === status)?.at;
-        setMilestone({ key: `jobcard-${jobcardId}-${status}`, text, at: at ?? Date.now() });
-      })
-      .catch(() => {
-        /* permission-denied / offline / not found — silently show no milestone line */
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [jobcardId]);
+  const stage = booking.jobcardStage;
+  let milestone: TimelineEntry | null = null;
+  if (stage) {
+    const text = STAGE_MILESTONE_COPY[stage];
+    if (text) milestone = { key: `stage-${booking.id}-${stage}`, text, at: firstSeenAt(booking.id, stage) };
+  }
 
   const items: TimelineEntry[] = [
     ...notes.map((note, i) => ({ key: `note-${note.at}-${i}`, at: note.at, text: note.text })),
@@ -120,6 +98,41 @@ export function WorkshopUpdates({
           </li>
         ))}
       </ol>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------
+// Coarse progress indicator (WAVE5_SPEC section D) — derived from booking status +
+// jobcardStage only. No task counts, no internals: just how far along the visit is.
+// ---------------------------------------------------------------------------------------
+
+const STAGE_STEPS = ['requested', 'confirmed', 'in_progress', 'quality_check', 'ready', 'delivered'] as const;
+
+/** Returns a 0..1 fraction, or null when there's nothing meaningful to show (cancelled, or
+ * a booking with no progress signal yet beyond "requested"). */
+function coarseProgressFraction(booking: Booking): number | null {
+  if (booking.status === 'cancelled') return null;
+  if (booking.status === 'delivered') return 1;
+  if (booking.status === 'ready' || booking.jobcardStage === 'ready') return 4 / (STAGE_STEPS.length - 1);
+  if (booking.jobcardStage === 'quality_check') return 3 / (STAGE_STEPS.length - 1);
+  if (booking.status === 'in_progress') return 2 / (STAGE_STEPS.length - 1); // covers 'working' or no stage yet
+  if (booking.status === 'confirmed') return 1 / (STAGE_STEPS.length - 1);
+  return 0; // requested
+}
+
+export function StageProgressBar({ booking }: { booking: Booking }) {
+  const fraction = coarseProgressFraction(booking);
+  if (fraction === null) return null;
+
+  return (
+    <div className="mt-3" aria-hidden="true">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-gold to-goldBright transition-[width] duration-500"
+          style={{ width: `${Math.round(fraction * 100)}%` }}
+        />
+      </div>
     </div>
   );
 }

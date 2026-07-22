@@ -7,16 +7,22 @@ import { InstallButton } from '../components/InstallButton';
 import { Field, inputClass } from '../components/Field';
 import { CheckIcon, CopyIcon, WhatsAppIcon, ChevronRightIcon, CarIcon } from '../components/icons';
 import { driver } from '../lib/driver';
-import { navigate } from '../lib/router';
+import { navigate, replaceRoute, BOOK_STEPS, type BookStep } from '../lib/router';
 import { saveMyBookingId } from '../lib/storage';
+import { getProfile, saveProfileFromBooking, type CustomerProfile } from '../lib/profile';
+import { withTimeout, TimeoutError } from '../lib/withTimeout';
 import { INDIAN_MAKES } from '../lib/makes';
 import { formatReg, formatPhoneInput, isValidPhone, todayISO, formatDate } from '../lib/format';
+import { STUDIO_WHATSAPP } from '../../shared/format';
 
-const STUDIO_WHATSAPP = '919900012090';
 const CATALOG_LABELS = new Map(SERVICE_CATALOG.map((s) => [s.id, s.label]));
+/** Submit-hang fix (WAVE5_SPEC section E.1) — never let createBooking spin forever. */
+const SUBMIT_TIMEOUT_MS = 12_000;
+/** Back-button-trap fix (WAVE5_SPEC section E.2) — session-scoped draft, cleared on submit. */
+const DRAFT_KEY = 'ap:book-draft';
 
-type Step = 'services' | 'vehicle' | 'contact' | 'review';
-const STEP_ORDER: Step[] = ['services', 'vehicle', 'contact', 'review'];
+type Step = BookStep;
+const STEP_ORDER: Step[] = [...BOOK_STEPS];
 const STEP_TITLES: Record<Step, string> = {
   services: 'Services',
   vehicle: 'Vehicle',
@@ -46,14 +52,125 @@ const EMPTY_FORM: BookForm = {
   otherRequest: '',
 };
 
-export function Book() {
+// ---------------------------------------------------------------------------------------
+// Session-scoped draft (WAVE5_SPEC section E.2) — survives a full exit from the flow
+// (navigating to Home/Track and back) within the same tab session so it can be offered
+// back to the customer, without ever leaving the device.
+// ---------------------------------------------------------------------------------------
+
+interface BookDraft {
+  step: Step;
+  form: BookForm;
+  savedAt: number;
+}
+
+function readDraft(): BookDraft | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as BookDraft) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(step: Step, form: BookForm): void {
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ step, form, savedAt: Date.now() } satisfies BookDraft));
+  } catch {
+    /* storage unavailable — non-fatal, just no resume offer */
+  }
+}
+
+function clearDraft(): void {
+  try {
+    sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** A draft is only worth offering if the customer actually entered something. */
+function isFormMeaningful(form: BookForm): boolean {
+  return (
+    form.serviceIds.length > 0 ||
+    !!form.reg.trim() ||
+    !!form.makeModel.trim() ||
+    !!form.name.trim() ||
+    !!form.phone.trim() ||
+    !!form.otherRequest.trim()
+  );
+}
+
+export function Book({ step: routeStep }: { step?: Step }) {
+  const step: Step = routeStep ?? 'services';
   const [form, setForm] = useState<BookForm>(EMPTY_FORM);
-  const [step, setStep] = useState<Step>('services');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState<Booking | null>(null);
+  const [resumeDraft, setResumeDraft] = useState<BookDraft | null>(null);
+  const [profileBanner, setProfileBanner] = useState<CustomerProfile | null>(null);
+  const initChecked = useRef(false);
+
+  // Bare "#/book" (e.g. a fresh link from Home) normalizes to "#/book/services" via a
+  // history REPLACE (not push) — so hardware back from step 1 exits straight to Home
+  // instead of bouncing through an extra "/book" stop.
+  useEffect(() => {
+    if (!routeStep) replaceRoute('/book/services');
+  }, [routeStep]);
+
+  // On first mount: offer to resume a leftover draft from earlier this session; otherwise,
+  // if this device has a remembered profile from a prior booking, prefill from it.
+  useEffect(() => {
+    if (initChecked.current) return;
+    initChecked.current = true;
+    const draft = readDraft();
+    if (draft && isFormMeaningful(draft.form)) {
+      setResumeDraft(draft);
+      return;
+    }
+    const profile = getProfile();
+    if (profile) applyProfilePrefill(profile);
+  }, []);
+
+  // Persist the in-progress draft on every step/form change so a full exit + return can
+  // offer to resume it. Session-scoped only — never sent anywhere, cleared on submit.
+  useEffect(() => {
+    if (success) return;
+    if (isFormMeaningful(form)) writeDraft(step, form);
+  }, [step, form, success]);
 
   const patch = (p: Partial<BookForm>) => setForm((f) => ({ ...f, ...p }));
+
+  function applyProfilePrefill(profile: CustomerProfile) {
+    const vehicle = profile.vehicles[0];
+    setForm((f) => ({
+      ...f,
+      name: profile.name || f.name,
+      phone: profile.phone || f.phone,
+      reg: vehicle ? formatReg(vehicle.regNumber) : f.reg,
+      makeModel: vehicle?.makeModel ?? f.makeModel,
+    }));
+    setProfileBanner(profile);
+  }
+
+  function applyResumeDraft() {
+    if (!resumeDraft) return;
+    setForm(resumeDraft.form);
+    navigate(`/book/${resumeDraft.step}`);
+    setResumeDraft(null);
+  }
+
+  function startFresh() {
+    clearDraft();
+    setResumeDraft(null);
+    const profile = getProfile();
+    if (profile) applyProfilePrefill(profile);
+  }
+
+  function clearProfilePrefill() {
+    setForm((f) => ({ ...f, name: '', phone: '', reg: '', makeModel: '' }));
+    setProfileBanner(null);
+  }
 
   if (success) {
     return <SuccessScreen booking={success} />;
@@ -63,36 +180,55 @@ export function Book() {
 
   function goNext() {
     const next = STEP_ORDER[stepIndex + 1];
-    if (next) setStep(next);
+    if (next) navigate(`/book/${next}`);
   }
   function goBackStep(): boolean {
     const prev = STEP_ORDER[stepIndex - 1];
     if (prev) {
-      setStep(prev);
+      navigate(`/book/${prev}`);
       return true;
     }
     return false;
+  }
+  function goToStep(s: Step) {
+    navigate(`/book/${s}`);
   }
 
   async function submit() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const booking = await driver.createBooking({
-        customer: { name: form.name.trim(), phone: form.phone },
-        vehicle: {
-          regNumber: formatReg(form.reg),
-          makeModel: form.makeModel.trim(),
-          ...(form.odometer ? { odometer: Number(form.odometer) } : {}),
-        },
-        serviceIds: form.serviceIds,
-        ...(form.otherRequest.trim() ? { otherRequest: form.otherRequest.trim() } : {}),
-        ...(form.preferredDate ? { preferredDate: form.preferredDate } : {}),
-      });
+      if (!navigator.onLine) {
+        throw new TimeoutError('offline');
+      }
+      const booking = await withTimeout(
+        driver.createBooking({
+          customer: { name: form.name.trim(), phone: form.phone },
+          vehicle: {
+            regNumber: formatReg(form.reg),
+            makeModel: form.makeModel.trim(),
+            ...(form.odometer ? { odometer: Number(form.odometer) } : {}),
+          },
+          serviceIds: form.serviceIds,
+          ...(form.otherRequest.trim() ? { otherRequest: form.otherRequest.trim() } : {}),
+          ...(form.preferredDate ? { preferredDate: form.preferredDate } : {}),
+        }),
+        SUBMIT_TIMEOUT_MS
+      );
       saveMyBookingId(booking.id);
+      saveProfileFromBooking(booking);
+      clearDraft();
       setSuccess(booking);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      // Form state is untouched above (we never clear it on error) — Back stays enabled
+      // (submitting flips back to false) and Confirm booking doubles as the retry action.
+      const message =
+        err instanceof TimeoutError
+          ? "Couldn't reach the server — check your connection and try again."
+          : err instanceof Error
+            ? err.message
+            : 'Something went wrong. Please try again.';
+      setSubmitError(message);
       setSubmitting(false);
     }
   }
@@ -102,6 +238,13 @@ export function Book() {
       back={stepIndex === 0 ? '/' : undefined}
       title={`Step ${stepIndex + 1} of ${STEP_ORDER.length}`}
     >
+      {resumeDraft && (
+        <ResumeDraftBanner onResume={applyResumeDraft} onDismiss={startFresh} />
+      )}
+      {!resumeDraft && profileBanner && (
+        <ProfileBanner profile={profileBanner} onChange={clearProfilePrefill} />
+      )}
+
       <StepIndicator current={stepIndex} />
 
       {step === 'services' && (
@@ -120,7 +263,7 @@ export function Book() {
       {step === 'review' && (
         <ReviewStep
           form={form}
-          onEdit={setStep}
+          onEdit={goToStep}
           onBack={() => goBackStep()}
           onConfirm={submit}
           submitting={submitting}
@@ -128,6 +271,53 @@ export function Book() {
         />
       )}
     </Shell>
+  );
+}
+
+// ---------------------------------------------------------------------------------------
+// Resume-draft / repeat-customer banners
+// ---------------------------------------------------------------------------------------
+
+function ResumeDraftBanner({ onResume, onDismiss }: { onResume: () => void; onDismiss: () => void }) {
+  return (
+    <div className="mb-4 rounded-xl border border-gold/30 bg-gold/10 p-3.5">
+      <p className="font-ui text-sm font-medium text-white">Resume where you left off?</p>
+      <p className="mt-0.5 font-body text-xs text-white/60">
+        You had a booking in progress from earlier.
+      </p>
+      <div className="mt-2.5 flex gap-2">
+        <Button onClick={onResume} className="!px-3 !py-1.5 text-sm">
+          Resume
+        </Button>
+        <Button variant="ghost" onClick={onDismiss} className="!px-3 !py-1.5 text-sm">
+          Start fresh
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ProfileBanner({ profile, onChange }: { profile: CustomerProfile; onChange: () => void }) {
+  const vehicle = profile.vehicles[0];
+  return (
+    <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-gold/25 bg-gold/5 px-3.5 py-2.5">
+      <p className="min-w-0 truncate font-ui text-sm text-white/70">
+        Booking as <span className="font-medium text-white">{profile.name || 'you'}</span>
+        {vehicle ? (
+          <>
+            {' '}
+            · <span className="font-mono text-white/80">{formatReg(vehicle.regNumber)}</span>
+          </>
+        ) : null}
+      </p>
+      <button
+        type="button"
+        onClick={onChange}
+        className="shrink-0 rounded px-1 font-ui text-xs text-goldBright hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-goldBright"
+      >
+        change
+      </button>
+    </div>
   );
 }
 

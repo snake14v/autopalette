@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import type { JobcardStatus } from '../../shared/types';
-import { useJobcards, useWorkItems } from '../lib/useDriver';
+import { useEmployees, useJobcards, useWorkItems } from '../lib/useDriver';
 import { buildQuery, navigate } from '../lib/router';
 import { inr } from '../lib/format';
 import { fmtHours, monthLabel } from '../lib/dates';
+import { employeeColor } from '../../shared/colors';
 import {
+  hoursByEmployee,
   hoursByWeek,
   monthlyJobCounts,
   repeatCustomerRate,
@@ -14,7 +16,7 @@ import {
   totalOutstanding,
 } from '../lib/analytics';
 import { JOBCARD_FLOW, JOBCARD_STATUS_LABEL, JOBCARD_STATUS_TONE } from '../lib/status';
-import { Badge, Panel, SectionHeading, Spinner } from '../ui';
+import { Badge, ColorDot, Panel, SectionHeading, Spinner } from '../ui';
 
 // Admin dashboard home = Data panel (Wave 2). Every figure is computed ONLY from real
 // recorded job cards / work items, each labelled with its date range. Empty inputs show
@@ -22,6 +24,7 @@ import { Badge, Panel, SectionHeading, Spinner } from '../ui';
 export default function DataPanel() {
   const jobcards = useJobcards();
   const workItems = useWorkItems();
+  const employees = useEmployees();
 
   const loading = jobcards === null || workItems === null;
 
@@ -36,11 +39,13 @@ export default function DataPanel() {
       repeat: repeatCustomerRate(jc),
       hours: hoursByWeek(wi, 6),
       status: statusBreakdown(jc),
+      // docs/WAVE5_SPEC.md section A — "DataPanel hours rows": total hours per employee.
+      byEmployee: hoursByEmployee(wi, employees ?? []),
       // "Real data exists" excludes void-only histories — a studio whose only job card was
       // voided has genuinely nothing to show yet, same honesty-gate reasoning as elsewhere.
       totalJobs: jc.filter((j) => j.status !== 'void').length,
     };
-  }, [jobcards, workItems]);
+  }, [jobcards, workItems, employees]);
 
   if (loading) return <Spinner label="Loading dashboard…" />;
 
@@ -155,6 +160,39 @@ export default function DataPanel() {
                 emptyLabel="No hours logged yet"
               />
             </button>
+          </Panel>
+
+          {/* Hours by employee (docs/WAVE5_SPEC.md section A "DataPanel hours rows") — real
+              logged hours only, each row in that employee's colour. */}
+          <Panel className="p-4">
+            <CardHead title="Hours by Employee" sub="All-time logged hours" />
+            {stats.byEmployee.length === 0 ? (
+              <p className="mt-3 font-body text-sm text-white/40">No hours logged yet.</p>
+            ) : (
+              <ul className="mt-3 flex flex-col gap-2">
+                {stats.byEmployee.map(({ employee, hours }) => {
+                  const max = stats.byEmployee[0].hours || 1;
+                  const color = employeeColor(employee, employees ?? []);
+                  return (
+                    <li key={employee.id} className="flex items-center gap-3">
+                      <ColorDot color={color} />
+                      <span className="w-28 shrink-0 truncate font-body text-sm text-white/75">
+                        {employee.name || employee.loginId}
+                      </span>
+                      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/5">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${Math.max(6, (hours / max) * 100)}%`, backgroundColor: color }}
+                        />
+                      </div>
+                      <span className="w-14 shrink-0 text-right font-ui text-sm text-white/80">
+                        {fmtHours(hours)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </Panel>
 
           {/* Job-card lifecycle breakdown (docs/JOBCARD_LIFECYCLE_SPEC.md item 7) — real

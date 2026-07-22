@@ -33,6 +33,7 @@ import {
   arrayUnion,
   serverTimestamp,
   runTransaction,
+  deleteField,
   Timestamp,
 } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -45,6 +46,7 @@ import {
   assertQualityCheckPassed,
   assertDeliverySignedOff,
   normalizeJobcardStatus,
+  jobcardStageForBookingMirror,
   type DataDriver,
   type AuthState,
   type WorkItemInput,
@@ -314,10 +316,19 @@ export function makeFirestoreDriver(): DataDriver {
       return { ...jc, id: docRef.id };
     },
 
+    async createBlankJobcardFor(customer, vehicle) {
+      const jc = blankJobcard('');
+      jc.customer = customer;
+      jc.vehicle = vehicle;
+      const { id: _drop, ...jcData } = jc;
+      const docRef = await addDoc(jobcardsCol, jcData);
+      return { ...jc, id: docRef.id };
+    },
+
     async saveJobcard(jc) {
       const pricing = computeJobcardPricing(jc.services, jc.pricing);
       const invoiceNumber = jc.invoiceNumber || (await nextInvoiceNumberTx());
-      const saved: Jobcard = { ...jc, pricing, invoiceNumber };
+      const saved: Jobcard = { ...jc, pricing, invoiceNumber, updatedAt: Date.now() };
       const { id, ...data } = saved;
       await setDoc(doc(db, 'jobcards', id), data, { merge: true });
       await upsertCustomer({ name: saved.customer.name, phone: saved.customer.phone, vehicle: saved.vehicle });
@@ -331,7 +342,17 @@ export function makeFirestoreDriver(): DataDriver {
 
     async setJobcardPaymentStatus(id, status) {
       // Nested-field write — touches only payment.status, leaving pricing/invoice untouched.
-      await updateDoc(doc(db, 'jobcards', id), { 'payment.status': status });
+      // A read-before-write is needed only to know the `from` value for paymentHistory
+      // (docs/WAVE5_SPEC.md section B); still no pricing recompute, no invoice allocation.
+      const ref = doc(db, 'jobcards', id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) throw new Error(`Job card ${id} not found`);
+      const from = (mapJobcard(snap.id, snap.data()).payment?.status ?? 'unpaid') as Jobcard['payment']['status'];
+      const patch: Record<string, unknown> = { 'payment.status': status };
+      if (from !== status) {
+        patch.paymentHistory = arrayUnion({ at: Date.now(), from, to: status });
+      }
+      await updateDoc(ref, patch);
     },
 
     subscribeJobcards(cb) {
@@ -373,6 +394,18 @@ export function makeFirestoreDriver(): DataDriver {
         };
         const { id: _drop, ...data } = next;
         tx.set(ref, data, { merge: true });
+
+        // docs/WAVE5_SPEC.md section D — admin-side customer-safe stage mirror onto the
+        // linked booking. No prior read of the booking doc is needed (unconditional merge),
+        // so this stays within the transaction's read-then-write ordering rule (the only read
+        // above is the jobcard's own snap.get()). deleteField() removes the field entirely for
+        // closed/void/open, rather than leaving a stale stage behind.
+        if (next.bookingId) {
+          const stage = jobcardStageForBookingMirror(status);
+          const bookingRef = doc(db, 'bookings', next.bookingId);
+          tx.set(bookingRef, { jobcardStage: stage ?? deleteField() }, { merge: true });
+        }
+
         return next;
       });
     },
@@ -453,6 +486,7 @@ export function makeFirestoreDriver(): DataDriver {
         notes: [],
         estHours: input.estHours,
         hoursLogged: 0,
+        createdAt: Date.now(),
       };
       const docRef = await addDoc(workItemsCol, wi);
       return { ...wi, id: docRef.id };
@@ -481,7 +515,10 @@ export function makeFirestoreDriver(): DataDriver {
     },
 
     async confirmWorkItem(id) {
-      await updateDoc(doc(db, 'work_items', id), { status: 'confirmed' as WorkItemStatus });
+      await updateDoc(doc(db, 'work_items', id), {
+        status: 'confirmed' as WorkItemStatus,
+        confirmedAt: Date.now(),
+      });
     },
 
     async adjustWorkItemHours(id, hours) {

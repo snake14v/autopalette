@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import type { WorkItem, WorkItemNote } from '../../shared/types';
-import { driver, useAuth, useWorkItems } from '../lib/useDriver';
+import { driver, useAuth, useEmployees, useWorkItems } from '../lib/useDriver';
 import { navigate } from '../lib/router';
 import { fmtHours, isBeforeToday, todayISO } from '../lib/dates';
 import { formatDate, formatTimestamp } from '../lib/format';
 import { WORKITEM_STATUS_LABEL, WORKITEM_STATUS_TONE } from '../lib/status';
 import { useOptimisticAction } from '../lib/useOptimisticAction';
+import { employeeColor } from '../../shared/colors';
 import { Badge, Button, EmptyState, Panel, Spinner, Textarea, Toggle, useToast } from '../ui';
 
 // Staff "My Day" (Wave 2): the signed-in employee's own items — today plus an overdue
@@ -16,6 +17,12 @@ export default function MyDay() {
   const auth = useAuth();
   const employeeId = auth?.employeeId;
   const items = useWorkItems(employeeId ? { employeeId } : undefined);
+  const employees = useEmployees();
+  const me = useMemo(
+    () => (employees ?? []).find((e) => e.id === employeeId) ?? null,
+    [employees, employeeId]
+  );
+  const myColor = employeeColor(me, employees ?? []);
 
   const { today, overdue } = useMemo(() => {
     const t: WorkItem[] = [];
@@ -44,7 +51,7 @@ export default function MyDay() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6">
-      <div className="mb-4">
+      <div className="mb-4 border-l-4 pl-3" style={{ borderLeftColor: myColor }}>
         <p className="font-ui text-[0.65rem] uppercase tracking-[0.25em] text-pinstripe-cyan/80">
           {formatDate(todayISO())}
         </p>

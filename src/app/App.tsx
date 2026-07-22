@@ -15,7 +15,7 @@ export default function App() {
     case 'home':
       return <Home />;
     case 'book':
-      return <Book />;
+      return <Book step={route.step} />;
     case 'track':
       return <Track id={route.id} />;
     case 'mine':

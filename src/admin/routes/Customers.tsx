@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Customer } from '../../shared/types';
 import { driver, useCustomers, useJobcards } from '../lib/useDriver';
 import { navigate } from '../lib/router';
 import { normalizePhone } from '../../shared/data';
 import { formatDate, inr } from '../lib/format';
 import { rollupCustomer } from '../lib/analytics';
+import { loadPref, savePref } from '../lib/persist';
 import {
   Button,
   EmptyState,
@@ -12,11 +13,44 @@ import {
   Modal,
   Panel,
   SectionHeading,
+  Select,
   Spinner,
   TextInput,
   useToast,
 } from '../ui';
 import type { Jobcard } from '../../shared/types';
+
+// docs/WAVE5_SPEC.md section C — persisted per-route sort control.
+type CustomerSort = 'name' | 'last-visit' | 'outstanding';
+const CUSTOMER_SORTS: CustomerSort[] = ['name', 'last-visit', 'outstanding'];
+const CUSTOMER_SORT_LABEL: Record<CustomerSort, string> = {
+  name: 'Name A–Z',
+  'last-visit': 'Last Visit',
+  outstanding: 'Outstanding',
+};
+const CUSTOMER_SORT_PREF_KEY = 'customers.sort';
+
+function sortCustomers(list: Customer[], jobcards: Jobcard[], sort: CustomerSort): Customer[] {
+  const arr = [...list];
+  switch (sort) {
+    case 'name':
+      arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      break;
+    case 'last-visit':
+      arr.sort((a, b) => {
+        const av = rollupCustomer(a.phone, jobcards).lastVisit ?? '';
+        const bv = rollupCustomer(b.phone, jobcards).lastVisit ?? '';
+        return bv.localeCompare(av); // most recent first
+      });
+      break;
+    case 'outstanding':
+      arr.sort(
+        (a, b) => rollupCustomer(b.phone, jobcards).outstanding - rollupCustomer(a.phone, jobcards).outstanding
+      );
+      break;
+  }
+  return arr;
+}
 
 // Customers panel (Wave 2): searchable registry with per-customer chips (visits, last visit,
 // outstanding). Admin can also add a walk-in who never booked online.
@@ -25,17 +59,26 @@ export default function Customers() {
   const jobcards = useJobcards();
   const [q, setQ] = useState('');
   const [addOpen, setAddOpen] = useState(false);
+  const [sort, setSort] = useState<CustomerSort>(
+    () => loadPref(CUSTOMER_SORT_PREF_KEY, 'name') as CustomerSort
+  );
+
+  useEffect(() => {
+    savePref(CUSTOMER_SORT_PREF_KEY, sort);
+  }, [sort]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const list = customers ?? [];
-    if (!needle) return list;
-    return list.filter((c) => {
-      if (c.name.toLowerCase().includes(needle)) return true;
-      if (c.phone.includes(needle.replace(/\D/g, ''))) return true;
-      return c.vehicles.some((v) => v.reg.toLowerCase().includes(needle));
-    });
-  }, [customers, q]);
+    const matched = !needle
+      ? list
+      : list.filter((c) => {
+          if (c.name.toLowerCase().includes(needle)) return true;
+          if (c.phone.includes(needle.replace(/\D/g, ''))) return true;
+          return c.vehicles.some((v) => v.reg.toLowerCase().includes(needle));
+        });
+    return sortCustomers(matched, jobcards ?? [], sort);
+  }, [customers, q, jobcards, sort]);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
@@ -45,14 +88,28 @@ export default function Customers() {
         right={<Button onClick={() => setAddOpen(true)}>+ Add Customer</Button>}
       />
 
-      <div className="mt-4">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
         <TextInput
           type="search"
           placeholder="Search by name, phone, or reg number…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           aria-label="Search customers"
+          className="flex-1"
         />
+        {/* docs/WAVE5_SPEC.md section C — persisted sort control. */}
+        <Select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as CustomerSort)}
+          aria-label="Sort customers"
+          className="sm:w-48"
+        >
+          {CUSTOMER_SORTS.map((s) => (
+            <option key={s} value={s}>
+              Sort: {CUSTOMER_SORT_LABEL[s]}
+            </option>
+          ))}
+        </Select>
       </div>
 
       <div className="mt-5">

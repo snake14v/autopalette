@@ -70,8 +70,24 @@ export default function CustomerDetail({ phone }: { phone: string }) {
     return open[0] ?? null;
   }, [myJobcards]);
 
+  // docs/WAVE5_SPEC.md section B — "most recent vehicle" for the New Job Card quick action:
+  // most recent job card's vehicle, falling back to the most recent booking's, then the
+  // registry's first vehicle on file.
+  const mostRecentVehicle = useMemo(() => {
+    const byJcDate = [...myJobcards].sort((a, b) => (a.date < b.date ? 1 : -1));
+    if (byJcDate[0]?.vehicle.regNumber) return byJcDate[0].vehicle;
+    const byBookingCreated = [...myBookings].sort((a, b) => b.createdAt - a.createdAt);
+    if (byBookingCreated[0]?.vehicle.regNumber) return byBookingCreated[0].vehicle;
+    if (customer) {
+      const first = customer.vehicles[0];
+      if (first) return { regNumber: first.reg, makeModel: first.makeModel };
+    }
+    return null;
+  }, [myJobcards, myBookings, customer]);
+
   const [notes, setNotes] = useState<string | null>(null);
   const [savingNotes, setSavingNotes] = useState(false);
+  const [creatingJobcard, setCreatingJobcard] = useState(false);
   const notesValue = notes ?? customer?.notes ?? '';
   const notesDirty = notes !== null && notes !== (customer?.notes ?? '');
 
@@ -96,6 +112,28 @@ export default function CustomerDetail({ phone }: { phone: string }) {
   for (const b of myBookings)
     if (b.vehicle.regNumber) vehicleMap.set(b.vehicle.regNumber.toUpperCase(), b.vehicle.makeModel);
 
+  // docs/WAVE5_SPEC.md section B — per-vehicle history grouping when >1 vehicle on file.
+  const multiVehicle = vehicleMap.size > 1;
+  const timelineByVehicle = useMemo(() => {
+    if (!multiVehicle) return null;
+    const groups = new Map<string, TimelineEntry[]>();
+    const other: TimelineEntry[] = [];
+    for (const e of timeline) {
+      const reg = (e.kind === 'booking' ? e.booking.vehicle.regNumber : e.jobcard.vehicle.regNumber)
+        ?.toUpperCase()
+        .trim();
+      if (!reg) {
+        other.push(e);
+        continue;
+      }
+      const list = groups.get(reg) ?? [];
+      list.push(e);
+      groups.set(reg, list);
+    }
+    return { groups, other };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeline, multiVehicle]);
+
   async function saveNotes() {
     if (savingNotes || !customer) return;
     setSavingNotes(true);
@@ -110,20 +148,42 @@ export default function CustomerDetail({ phone }: { phone: string }) {
     }
   }
 
+  // docs/WAVE5_SPEC.md section B — "New job card" quick action: prefilled with this
+  // customer + their most recent vehicle. No invoice number allocated yet (same as a walk-in).
+  async function newJobcardForCustomer() {
+    if (creatingJobcard || !customer) return;
+    setCreatingJobcard(true);
+    try {
+      const jc = await driver.createBlankJobcardFor(
+        { name: customer.name, phone: customer.phone },
+        mostRecentVehicle ?? { regNumber: '', makeModel: '' }
+      );
+      navigate(`/jobcards/${jc.id}`);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not create job card', 'error');
+      setCreatingJobcard(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
       <BackLink />
 
       <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <SectionHeading eyebrow="Customer" title={customer.name || 'Unnamed'} />
-        <a
-          href={whatsappLink(`Hi ${customer.name || ''}`.trim())}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-lg border border-pinstripe-emerald/40 px-3 py-1.5 font-ui text-xs text-pinstripe-emerald hover:bg-pinstripe-emerald/10"
-        >
-          WhatsApp
-        </a>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" onClick={newJobcardForCustomer} disabled={creatingJobcard}>
+            {creatingJobcard ? 'Creating…' : '+ New Job Card'}
+          </Button>
+          <a
+            href={whatsappLink(`Hi ${customer.name || ''}`.trim())}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg border border-pinstripe-emerald/40 px-3 py-1.5 font-ui text-xs text-pinstripe-emerald hover:bg-pinstripe-emerald/10"
+          >
+            WhatsApp
+          </a>
+        </div>
       </div>
 
       {/* Summary chips */}
@@ -200,11 +260,48 @@ export default function CustomerDetail({ phone }: { phone: string }) {
         </div>
       </Panel>
 
-      {/* History */}
+      {/* History — grouped per vehicle when the customer has >1 vehicle on file
+          (docs/WAVE5_SPEC.md section B); a flat list otherwise, unchanged from before. */}
       <Panel className="mt-4 p-4">
         <SectionHeading title="History" />
         {timeline.length === 0 ? (
           <p className="mt-2 font-body text-sm text-white/40">No bookings or job cards yet.</p>
+        ) : timelineByVehicle ? (
+          <div className="mt-3 flex flex-col gap-4">
+            {[...timelineByVehicle.groups.entries()].map(([reg, entries]) => (
+              <div key={reg}>
+                <p className="mb-1.5 font-ui text-[0.65rem] font-semibold uppercase tracking-wider text-white/45">
+                  {reg}
+                  {vehicleMap.get(reg) ? ` · ${vehicleMap.get(reg)}` : ''}
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {entries.map((e, i) =>
+                    e.kind === 'booking' ? (
+                      <HistoryBooking key={`b-${e.booking.id}-${i}`} booking={e.booking} />
+                    ) : (
+                      <HistoryJobcard key={`j-${e.jobcard.id}-${i}`} jobcard={e.jobcard} />
+                    )
+                  )}
+                </ul>
+              </div>
+            ))}
+            {timelineByVehicle.other.length > 0 && (
+              <div>
+                <p className="mb-1.5 font-ui text-[0.65rem] font-semibold uppercase tracking-wider text-white/45">
+                  No reg on file
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {timelineByVehicle.other.map((e, i) =>
+                    e.kind === 'booking' ? (
+                      <HistoryBooking key={`b-${e.booking.id}-${i}`} booking={e.booking} />
+                    ) : (
+                      <HistoryJobcard key={`j-${e.jobcard.id}-${i}`} jobcard={e.jobcard} />
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
         ) : (
           <ul className="mt-3 flex flex-col gap-2">
             {timeline.map((e, i) =>
