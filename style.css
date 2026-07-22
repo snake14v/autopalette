@@ -233,6 +233,25 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 .hero.loaded .hero-bg {
   transform: scale(1);
 }
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -3; /* after .hero-bg in the DOM, so it paints above the illustration */
+  filter: brightness(0.55) saturate(0.85);
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+.hero-video.playing {
+  opacity: 1;
+}
+/* Belt to the JS gate's suspenders: never show video on small screens or for
+   reduced-motion visitors even if a source somehow got attached. */
+@media (max-width: 767px), (prefers-reduced-motion: reduce) {
+  .hero-video { display: none; }
+}
 .hero-overlay {
   position: absolute;
   inset: 0;

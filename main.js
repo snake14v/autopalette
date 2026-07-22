@@ -10,8 +10,30 @@ document.addEventListener('DOMContentLoaded', () => {
   initFaq();
   initPriceEstimator();
   initMagneticButtons();
+  initHeroVideo();
   document.querySelector('.hero')?.classList.add('loaded');
 });
+
+// ---- HERO VIDEO (desktop-only, motion-ok, non-data-saver) ----
+// The <video> ships with no source so mobile/reduced-motion/save-data visitors
+// never download a byte; the gate here attaches it only when appropriate.
+function initHeroVideo() {
+  const video = document.querySelector('.hero-video');
+  if (!video) return;
+  const wantsVideo =
+    window.matchMedia('(min-width: 768px)').matches &&
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+    !(navigator.connection && navigator.connection.saveData);
+  if (!wantsVideo) return;
+  // Attach after window load so the video never competes with critical assets.
+  const attach = () => {
+    video.src = '/hero-loop.mp4';
+    video.addEventListener('playing', () => video.classList.add('playing'), { once: true });
+    video.play().catch(() => { /* autoplay blocked -> poster/illustration stays, no error */ });
+  };
+  if (document.readyState === 'complete') attach();
+  else window.addEventListener('load', attach, { once: true });
+}
 
 // ---- SCROLL REVEAL ENGINE ----
 function initScrollReveal() {

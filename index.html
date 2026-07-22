@@ -64,6 +64,10 @@
 <!-- HERO -->
 <section class="hero" id="home">
   <div class="hero-bg" style="background-image:url('/hero_illustration.webp');"></div>
+  <!-- Cinematic hero loop (Pexels License, Pavel Danilyuk, pexels.com/video/6159287).
+       Source is injected by JS only on desktop, motion-ok, non-data-saver visitors —
+       mobile and reduced-motion visitors never download a byte of video. -->
+  <video class="hero-video" muted loop playsinline poster="/hero-poster.jpg" preload="none" aria-hidden="true" tabindex="-1"></video>
   <div class="hero-overlay"></div>
   <div class="hero-speed-lines">
     <div class="h-line" style="top:20%;width:400px;left:-400px;--duration:4s;--delay:0s;"></div>
