@@ -1,79 +1,16 @@
 /* ============================================================
    AUTO PALETTE — Main JavaScript
-   NFS Tachometer Entrance + Scroll Reveal + Parallax Engine
+   Scroll reveal + navbar + counters + FAQ + price estimator
    ============================================================ */
 
-// ---- ENTRANCE GATE: ENGINE START ENGINE ----
 document.addEventListener('DOMContentLoaded', () => {
-  const gate = document.getElementById('entrance-gate');
-  const counterEl = document.getElementById('gate-counter-num');
-  const needle = document.getElementById('tacho-needle');
-  const tagline = document.getElementById('gate-tagline');
-
-  // Boot the whole site IMMEDIATELY. Page content is visible by default and must
-  // never wait on — or be blocked by — the cosmetic intro. All inits are idempotent.
-  const bootSite = () => {
-    initScrollReveal();
-    initParallax();
-    initNavbar();
-    initCounterAnimation();
-    initCustomCursor();
-    initVectorParallax();
-    initFaq();
-    initPriceEstimator();
-    initMagneticButtons();
-    document.querySelector('.hero')?.classList.add('loaded');
-  };
-  bootSite();
-
-  // The intro tachometer is just a dismissible overlay ON TOP of the live page.
-  let dismissed = false;
-  const dismissGate = () => {
-    if (dismissed) return;
-    dismissed = true;
-    try { sessionStorage.setItem('ap_seen', '1'); } catch (e) {}
-    if (gate) {
-      gate.classList.add('fade-out');
-      setTimeout(() => { gate.style.display = 'none'; }, 600);
-    }
-  };
-
-  // Auto-skip the intro entirely for: no gate, reduced-motion, phones, or repeat visits.
-  let seen = false; try { seen = sessionStorage.getItem('ap_seen') === '1'; } catch (e) {}
-  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const small = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-  if (!gate || seen || reduce || small) {
-    if (gate) gate.style.display = 'none';
-    return;
-  }
-
-  // Let the visitor bail out at any moment (button / tap / scroll / key).
-  document.getElementById('gate-skip')?.addEventListener('click', dismissGate);
-  ['keydown', 'touchstart', 'wheel'].forEach((evt) =>
-    window.addEventListener(evt, dismissGate, { once: true, passive: true })
-  );
-  // Hard cap: the intro can NEVER hold the page longer than ~2.2s.
-  const capTimer = setTimeout(dismissGate, 2200);
-
-  // Short cosmetic rev sweep, then auto-dismiss.
-  const startTime = performance.now();
-  const duration = 1500;
-  function animateEngine(time) {
-    if (dismissed) return;
-    const elapsed = time - startTime;
-    const rev = Math.min(100, (elapsed / duration) * 100);
-    if (counterEl) counterEl.textContent = Math.floor(rev);
-    if (needle) needle.setAttribute('transform', `rotate(${-135 + (rev / 100) * 270} 150 150)`);
-    if (elapsed < duration) {
-      requestAnimationFrame(animateEngine);
-    } else {
-      if (needle) { needle.setAttribute('stroke', '#ff1a1a'); needle.classList.add('rgb-redline'); }
-      if (tagline) tagline.style.opacity = '1';
-      clearTimeout(capTimer);
-      setTimeout(dismissGate, 250);
-    }
-  }
-  requestAnimationFrame(animateEngine);
+  initScrollReveal();
+  initNavbar();
+  initCounterAnimation();
+  initFaq();
+  initPriceEstimator();
+  initMagneticButtons();
+  document.querySelector('.hero')?.classList.add('loaded');
 });
 
 // ---- SCROLL REVEAL ENGINE ----
@@ -104,39 +41,6 @@ function initScrollReveal() {
   }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 
   revealElements.forEach((el) => observer.observe(el));
-
-  // Belt-and-suspenders: a scroll/resize check that can never leave content
-  // stuck hidden even if the IntersectionObserver misfires or inits offscreen.
-  const checkInView = () => {
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-    for (const el of revealElements) {
-      if (el.classList.contains('active')) continue;
-      const r = el.getBoundingClientRect();
-      if (r.bottom > 0 && r.top < vh * 0.92) {
-        activate(el);
-        observer.unobserve(el);
-      }
-    }
-  };
-  checkInView();
-  window.addEventListener('scroll', checkInView, { passive: true });
-  window.addEventListener('resize', checkInView, { passive: true });
-}
-
-// ---- PARALLAX SCROLLING ----
-function initParallax() {
-  const parallaxElements = document.querySelectorAll('[data-parallax]');
-  
-  window.addEventListener('scroll', () => {
-    const scrollY = window.pageYOffset;
-
-    parallaxElements.forEach(el => {
-      const speed = parseFloat(el.dataset.parallax) || 0.3;
-      const rect = el.getBoundingClientRect();
-      const offset = (rect.top + scrollY - window.innerHeight / 2) * speed;
-      el.style.transform = `translateY(${offset}px)`;
-    });
-  }, { passive: true });
 }
 
 // ---- NAVBAR SCROLL EFFECT ----
@@ -239,58 +143,6 @@ document.addEventListener('mouseleave', (e) => {
   }
 }, true);
 
-// ---- CUSTOM CURSOR ----
-function initCustomCursor() {
-  // No custom cursor on touch devices (nothing to point, and it wastes a rAF loop).
-  if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
-  const cursor = document.getElementById('custom-cursor');
-  const dot = document.getElementById('custom-cursor-dot');
-  if(!cursor || !dot) return;
-
-  let mouseX = 0;
-  let mouseY = 0;
-  let cursorX = 0;
-  let cursorY = 0;
-
-  document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-    dot.style.transform = `translate(${mouseX - 3}px, ${mouseY - 3}px)`;
-  });
-
-  function render() {
-    cursorX += (mouseX - cursorX) * 0.2;
-    cursorY += (mouseY - cursorY) * 0.2;
-    cursor.style.transform = `translate(${cursorX - 15}px, ${cursorY - 15}px)`;
-    requestAnimationFrame(render);
-  }
-  requestAnimationFrame(render);
-
-  const hoverElements = document.querySelectorAll('a, button, .service-card, .gallery-item, .wa-chip');
-  hoverElements.forEach(el => {
-    el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-    el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
-  });
-}
-
-// ---- VECTOR MOUSE PARALLAX ----
-function initVectorParallax() {
-  // Mouse-driven parallax is pointless on touch — skip it to save battery/jank.
-  if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
-  const v1 = document.querySelector('.v1');
-  const v2 = document.querySelector('.v2');
-  const v3 = document.querySelector('.v3');
-
-  document.addEventListener('mousemove', (e) => {
-    const x = e.clientX / window.innerWidth - 0.5;
-    const y = e.clientY / window.innerHeight - 0.5;
-
-    if(v1) v1.style.transform = `translate(${x * -50}px, ${y * -50}px) rotate(${x * 20}deg)`;
-    if(v2) v2.style.transform = `translate(${x * 80}px, ${y * 80}px) rotate(${x * -20}deg)`;
-    if(v3) v3.style.transform = `translate(${x * -30}px, ${y * -30}px)`;
-  });
-}
-
 // ---- FAQ ACCORDION ----
 function initFaq() {
   const faqItems = document.querySelectorAll('.faq-item');
@@ -312,6 +164,8 @@ function initFaq() {
 }
 
 // ---- PRICE ESTIMATOR ----
+// Static price table — values unchanged from the pre-rebuild version; only the
+// output copy/framing and the primary CTA destination changed (see index.html).
 function initPriceEstimator() {
   const prices = {
     hatchback: { ppf: '35,000', ceramic: '8,000', detailing: '3,500' },
@@ -350,7 +204,8 @@ function initPriceEstimator() {
     });
   });
 
-  // Expose sendQuoteWa globally
+  // Expose sendQuoteWa globally — secondary WhatsApp path from the estimator
+  // (primary path is the "CONTINUE TO BOOKING" link to /app/#/book in index.html).
   window.sendQuoteWa = function() {
     const price = prices[selectedVehicle][selectedService];
     const svc = selectedService.toUpperCase();
@@ -359,9 +214,9 @@ function initPriceEstimator() {
       `🛡️ *Auto Palette — Quote Request*\n\n` +
       `*Vehicle Type:* ${veh}\n` +
       `*Service:* ${svc}\n` +
-      `*Estimated Price:* ₹${price}\n` +
+      `*Typical Starting Price:* ₹${price}\n` +
       `*Duration:* ${durations[selectedService]}\n\n` +
-      `I'd like to confirm this quote and book a slot.`
+      `I'd like to confirm this on inspection and book a slot.`
     );
     window.open('https://wa.me/918884471117?text=' + msg, '_blank');
   };
@@ -371,7 +226,7 @@ function initPriceEstimator() {
 
 // ---- MAGNETIC BUTTONS ----
 function initMagneticButtons() {
-  const btns = document.querySelectorAll('.btn-primary, .btn-secondary, .nav-cta, .offer-cta');
+  const btns = document.querySelectorAll('.btn-primary, .btn-secondary, .nav-cta');
   btns.forEach(btn => {
     btn.addEventListener('mousemove', (e) => {
       const rect = btn.getBoundingClientRect();
