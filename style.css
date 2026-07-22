@@ -1476,6 +1476,10 @@ select.form-control {
 /* Brands Ticker */
 .brands-ticker {
   background: #050505;
+  /* Faint carbon-fibre cross-weave — texture only, must stay near-invisible (≤3% white). */
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.022) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.016) 0 2px, transparent 2px 6px);
   padding: 2rem 0;
   border-top: 1px solid var(--gray-darker);
   border-bottom: 1px solid var(--gray-darker);
@@ -1512,19 +1516,115 @@ select.form-control {
 
 .brand-item {
   font-family: var(--font-body);
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 800;
   color: var(--gray-dark);
   letter-spacing: 3px;
   white-space: nowrap;
-  transition: all 0.3s;
+  transition: filter 0.3s, opacity 0.3s;
   cursor: default;
+  opacity: 0.92;
 }
 
 .brand-item:hover {
-  color: var(--gold);
-  text-shadow: 0 0 20px rgba(197, 164, 78, 0.4);
+  opacity: 1;
+  filter: drop-shadow(0 0 14px var(--brand-glow, rgba(255, 255, 255, 0.35)));
 }
+
+/* ============================================================
+   PER-BRAND WORDMARKS
+   Colours/letterforms researched from each brand's official site or
+   brand-guidelines page (Jul 2026), approximated with loaded fonts only.
+   Shared by the hero ticker (.brand-item) and footer (.footer-brand-item).
+   ============================================================ */
+
+/* 3M — the fused red wordmark: Helvetica-Black-like, near-zero tracking. */
+.brand--3m {
+  color: #f11523;
+  --brand-glow: rgba(241, 21, 35, 0.45);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+}
+
+/* XPEL — wordmark is locked black/white; official palette pairs it with
+   Pantone 1235C golden-yellow, echoed as the underline accent. */
+.brand--xpel {
+  color: #ffffff;
+  --brand-glow: rgba(253, 181, 33, 0.45);
+  letter-spacing: 0.04em;
+  position: relative;
+}
+.brand--xpel::after {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -0.32em;
+  height: 0.14em;
+  background: #fdb521;
+}
+
+/* GARWARE PPF — white heavy grotesque with the red G monogram lead. */
+.brand--garware {
+  color: #f2f2f2;
+  --brand-glow: rgba(229, 0, 25, 0.4);
+  letter-spacing: 0.03em;
+}
+.brand--garware .g {
+  color: #e50019;
+}
+
+/* CERAMIC PRO — current identity is a white mark on dark; rendered as a
+   glass/ceramic silver gradient rather than any invented colour. */
+.brand--ceramicpro {
+  background: linear-gradient(180deg, #ffffff 0%, #d3dde2 55%, #9fb2bd 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  --brand-glow: rgba(211, 221, 226, 0.4);
+  font-weight: 700;
+  letter-spacing: 0.24em;
+}
+
+/* GTECHNIQ — their own on-dark treatment reverses the mark to red-on-black. */
+.brand--gtechniq {
+  color: #ed1c24;
+  --brand-glow: rgba(237, 28, 36, 0.45);
+  letter-spacing: -0.015em;
+}
+
+/* CARPRO — strictly monochrome mark; signature diagonal-cut speed bar over "PRO". */
+.brand--carpro {
+  color: #f5f5f2;
+  --brand-glow: rgba(245, 245, 242, 0.4);
+  letter-spacing: -0.01em;
+}
+.brand--carpro .pro {
+  position: relative;
+}
+.brand--carpro .pro::before {
+  content: '';
+  position: absolute;
+  top: -0.34em;
+  left: 0.06em;
+  width: 1.35em;
+  height: 0.15em;
+  background: currentColor;
+  transform: skewX(-32deg);
+}
+
+/* Footer chips reuse the brand colours but stay quiet: no decorative bars,
+   just a faint border tint in each brand's colour. */
+.footer-brand-item.brand--xpel::after,
+.footer-brand-item.brand--carpro .pro::before {
+  display: none;
+}
+.footer-brand-item.brand--3m { border-color: rgba(241, 21, 35, 0.35); }
+.footer-brand-item.brand--xpel { border-color: rgba(253, 181, 33, 0.35); }
+.footer-brand-item.brand--garware { border-color: rgba(229, 0, 25, 0.3); }
+.footer-brand-item.brand--ceramicpro { border-color: rgba(211, 221, 226, 0.3); }
+.footer-brand-item.brand--gtechniq { border-color: rgba(237, 28, 36, 0.35); }
+.footer-brand-item.brand--carpro { border-color: rgba(245, 245, 242, 0.3); }
 
 @keyframes brandsScroll {
   0% { transform: translateX(0); }
@@ -1539,7 +1639,8 @@ select.form-control {
   .option-grid { grid-template-columns: 1fr 1fr; }
   .price-output #estimated-price { font-size: 3rem; }
   .estimator-display { padding: 2rem 1.5rem; }
-  .brand-item { font-size: 0.9rem; letter-spacing: 3px; }
+  /* Per-brand letter-spacing (brand--* classes) must survive on mobile — size only here. */
+  .brand-item { font-size: 0.9rem; }
 }
 
 /* ============================================================
