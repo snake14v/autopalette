@@ -15,10 +15,10 @@ front door; the app lives alongside it.
 - No invented prices, ratings, or claims. Prices come from the admin or say
   "priced on inspection".
 - India context: GST optional (default rate 18%, editable), ₹, phone-first customers.
-- CONTACT POLICY (owner directive): the ONLY contact channels anywhere in the app,
-  admin, and invoice are these two numbers and WhatsApp — +91 88844 71117 and
-  +91 99000 12090 (WhatsApp deep links use 919900012090). NO email addresses
-  anywhere: no mailto links, no email form fields, no email in the invoice header.
+- CONTACT POLICY (owner directive, updated 2026-07-22): the ONLY contact channels
+  anywhere in the app, admin, and invoice are +91 88844 71117 (call + WhatsApp;
+  deep links use 918884471117) and autopalette23@gmail.com. The old second number
+  +91 99000 12090 was removed on owner instruction — never reintroduce it.
 
 ## Architecture
 - Vite multi-page app in the existing repo:
@@ -117,7 +117,7 @@ UI shows "on inspection" when absent).
    (reg, make/model via free text + datalist of common Indian makes, odometer
    optional), name + phone, preferred date, free-text requests → submit → success
    screen with booking ID + "Save to this phone" (localStorage) + WhatsApp deep link
-   prefilled with the booking summary to the studio number (+91 9900012090).
+   prefilled with the booking summary to the studio number (+91 8884471117).
 2. **Track**: enter booking ID (or tap one saved on device) → status timeline
    (requested → confirmed → in progress → ready → delivered) with timestamps/notes.
 3. **My bookings**: list from localStorage.
@@ -144,7 +144,7 @@ UI shows "on inspection" when absent).
      sips ink. `print-color-adjust: exact` so the light tints survive printing.
    - Header: Autopalette logo (from business-card/logo.png; must read cleanly on
      white), studio name, JP Nagar 9th Phase, Bengaluru 560108,
-     +91 88844 71117 · +91 99000 12090 · WhatsApp · autopalette.in. NO email.
+     +91 88844 71117 (call + WhatsApp) · autopalette23@gmail.com · autopalette.in.
    - Body: invoice number + date; customer/vehicle block (all fields incl. odometer);
      line-items table (service, qty, unit price, line total); Materials Used block;
      totals block right-aligned (subtotal, discount, GST only when enabled, TOTAL,

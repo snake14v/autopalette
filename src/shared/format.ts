@@ -55,8 +55,10 @@ export function formatDateTime(value?: string): string {
   });
 }
 
-/** Digits-only phone for a wa.me deep link (studio WhatsApp number). */
-export const STUDIO_WHATSAPP = '919900012090';
+/** Digits-only phone for a wa.me deep link (studio WhatsApp number).
+    Owner directive 2026-07-22: 88844 71117 is the ONLY studio number — the old
+    99000 12090 is retired everywhere; never point a wa.me link back at it. */
+export const STUDIO_WHATSAPP = '918884471117';
 
 export function whatsappLink(text: string): string {
   return `https://wa.me/${STUDIO_WHATSAPP}?text=${encodeURIComponent(text)}`;

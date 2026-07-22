@@ -22,7 +22,7 @@ Near-black (`#0a0a0a` family) + gold (`#c5a44e`/`#e8c96e`/`#ffd700`) + RGB pinst
 ## Gotchas
 - **Live DB discipline**: production Firestore is the client's real data. Never create job cards in live testing (burns the AP-YYYY-#### invoice counter); test bookings must be labeled and cancelled.
 - Honesty audit heritage (`481c60c`,`6b09719`): no fabricated ratings/claims; data panel shows real recorded data only, "No data yet" over placeholder numbers.
-- Contact policy: only +91 88844 71117, +91 99000 12090, WhatsApp. No email anywhere user-facing (synthetic auth emails are internal-only).
+- Contact policy (owner directive 2026-07-22): only +91 88844 71117 (call + WhatsApp, wa.me/918884471117) and autopalette23@gmail.com. Old number 99000 12090 removed everywhere — never reintroduce. Synthetic auth emails stay internal-only.
 - Old domain typo `autopalatte.in` fixed in `4993a b8` — grep before touching SEO tags.
 - No test suite — verify by rendering (Fable rule).
 - Owning subagent: none dedicated — general frontend + this file + APP_SPEC.md.
