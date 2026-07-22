@@ -9,6 +9,8 @@ import { rollupCustomer } from '../lib/analytics';
 import {
   BOOKING_STATUS_LABEL,
   BOOKING_STATUS_TONE,
+  JOBCARD_STATUS_LABEL,
+  JOBCARD_STATUS_TONE,
   PAYMENT_STATUS_LABEL,
   PAYMENT_STATUS_TONE,
 } from '../lib/status';
@@ -249,13 +251,17 @@ function HistoryJobcard({ jobcard: j }: { jobcard: Jobcard }) {
         className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-char3/50 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.04]"
       >
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="font-display text-xs font-bold tracking-wide text-goldBright">
               {j.invoiceNumber || 'Unsaved'}
             </span>
-            <Badge tone={PAYMENT_STATUS_TONE[j.payment.status]}>
-              {PAYMENT_STATUS_LABEL[j.payment.status]}
-            </Badge>
+            {j.status === 'void' ? (
+              <Badge tone={JOBCARD_STATUS_TONE.void}>{JOBCARD_STATUS_LABEL.void}</Badge>
+            ) : (
+              <Badge tone={PAYMENT_STATUS_TONE[j.payment.status]}>
+                {PAYMENT_STATUS_LABEL[j.payment.status]}
+              </Badge>
+            )}
           </div>
           <p className="mt-0.5 truncate font-body text-xs text-white/55">
             {j.vehicle.regNumber || 'No reg'} · {formatDate(j.date)}

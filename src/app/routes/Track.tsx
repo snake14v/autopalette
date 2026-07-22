@@ -203,7 +203,7 @@ function TrackedBooking({ booking }: { booking: Booking }) {
         Progress
       </h2>
       <StatusTimeline booking={booking} />
-      <WorkshopUpdates bookingId={booking.id} />
+      <WorkshopUpdates bookingId={booking.id} jobcardId={booking.jobcardId} />
     </div>
   );
 }

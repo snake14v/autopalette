@@ -1,19 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Booking, Employee, Jobcard, WorkItem } from '../../shared/types';
-import { computeJobcardPricing } from '../../shared/data';
+import type {
+  Booking,
+  Employee,
+  Jobcard,
+  JobcardCheckIn,
+  JobcardDelivery,
+  JobcardQcChecklistItem,
+  WorkItem,
+} from '../../shared/types';
+import { computeJobcardPricing, DEFAULT_QC_CHECKLIST } from '../../shared/data';
 import { CATEGORIES, SERVICE_CATALOG } from '../../shared/catalog';
 import { driver, useEmployees, useJobcardOnce, useWorkItems } from '../lib/useDriver';
 import { navigate, setNavGuard } from '../lib/router';
 import { fmtHours, todayISO } from '../lib/dates';
-import { inr } from '../lib/format';
+import { formatTimestamp, inr } from '../lib/format';
 import { customerWhatsappLink, paymentNudgeText } from '../lib/whatsapp';
-import { WORKITEM_STATUS_LABEL, WORKITEM_STATUS_TONE } from '../lib/status';
+import {
+  JOBCARD_NEXT_ACTION_LABEL,
+  JOBCARD_STATUS_LABEL,
+  JOBCARD_STATUS_TONE,
+  WORKITEM_STATUS_LABEL,
+  WORKITEM_STATUS_TONE,
+} from '../lib/status';
 import {
   Badge,
   Button,
   EmptyState,
   Field,
   Panel,
+  ReasonDialog,
   SectionHeading,
   Select,
   Spinner,
@@ -21,6 +36,11 @@ import {
   Textarea,
   useToast,
 } from '../ui';
+
+/** Fresh default checklist (all unchecked) — seeded whenever a job card has none saved yet. */
+function defaultChecklist(): JobcardQcChecklistItem[] {
+  return DEFAULT_QC_CHECKLIST.map((item) => ({ item, passed: false }));
+}
 
 const LABEL_BY_ID = new Map(SERVICE_CATALOG.map((s) => [s.id, s.label]));
 
@@ -61,14 +81,49 @@ export default function JobcardEditor({ id }: { id: string }) {
   const [booking, setBooking] = useState<Booking | null>(null);
   const loadedId = useRef<string | null>(null);
 
+  // --- lifecycle panel state (docs/JOBCARD_LIFECYCLE_SPEC.md) — deliberately separate from
+  // `draft`/`dirty`/the billing Save button: check-in/QC/delivery persist via their own
+  // focused DataDriver setters, distinct from the billing-edit action + its audit trail.
+  const [checkInDraft, setCheckInDraft] = useState<JobcardCheckIn>({});
+  const [qcChecklist, setQcChecklist] = useState<JobcardQcChecklistItem[]>(defaultChecklist());
+  const [qcNotes, setQcNotes] = useState('');
+  const [qcOverrideReason, setQcOverrideReason] = useState('');
+  const [deliveryDraft, setDeliveryDraft] = useState<JobcardDelivery>({ customerSignedOff: false });
+  const [transitioning, setTransitioning] = useState(false);
+  const [reopenOpen, setReopenOpen] = useState(false);
+  const [voidOpen, setVoidOpen] = useState(false);
+
   // Seed the working copy once per loaded job card.
   useEffect(() => {
     if (jobcard && loadedId.current !== jobcard.id) {
       setDraft(structuredClone(jobcard));
       setDirty(false);
       loadedId.current = jobcard.id;
+      seedLifecyclePanels(jobcard);
     }
   }, [jobcard]);
+
+  function seedLifecyclePanels(jc: Jobcard) {
+    setCheckInDraft(jc.checkIn ? structuredClone(jc.checkIn) : {});
+    setQcChecklist(
+      jc.qualityCheck?.checklist && jc.qualityCheck.checklist.length > 0
+        ? structuredClone(jc.qualityCheck.checklist)
+        : defaultChecklist()
+    );
+    setQcNotes(jc.qualityCheck?.notes ?? '');
+    setQcOverrideReason('');
+    setDeliveryDraft({
+      odometerOut: jc.delivery?.odometerOut,
+      customerSignedOff: jc.delivery?.customerSignedOff ?? false,
+    });
+  }
+
+  /** After any lifecycle driver call, refresh both the rendered draft and the panel state
+   *  from the returned Jobcard — mirrors how save() refreshes `draft` after saveJobcard. */
+  function applyLifecycleUpdate(updated: Jobcard) {
+    setDraft(structuredClone(updated));
+    seedLifecyclePanels(updated);
+  }
 
   // Fetch the source booking (for the "import services" affordance).
   useEffect(() => {
@@ -185,6 +240,87 @@ export default function JobcardEditor({ id }: { id: string }) {
     }
   }
 
+  // --- lifecycle actions (docs/JOBCARD_LIFECYCLE_SPEC.md) --------------------------------
+
+  async function doTransition(status: Jobcard['status'], opts?: { reason?: string }) {
+    if (transitioning || !draft) return;
+    setTransitioning(true);
+    try {
+      const updated = await driver.setJobcardStatus(draft.id, status, opts);
+      applyLifecycleUpdate(updated);
+      toast(`${updated.invoiceNumber || 'Job card'} → ${JOBCARD_STATUS_LABEL[status]}`);
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Status update failed', 'error');
+    } finally {
+      setTransitioning(false);
+    }
+  }
+
+  async function saveCheckIn() {
+    if (!draft) return;
+    try {
+      const updated = await driver.saveJobcardCheckIn(draft.id, checkInDraft);
+      applyLifecycleUpdate(updated);
+      toast('Check-in saved');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Save failed', 'error');
+    }
+  }
+
+  const qcAllPassed = qcChecklist.length > 0 && qcChecklist.every((c) => c.passed);
+
+  async function passQC() {
+    if (!draft || transitioning) return;
+    if (!qcAllPassed && !qcOverrideReason.trim()) {
+      toast('Check every item, or add an override note to proceed anyway', 'error');
+      return;
+    }
+    setTransitioning(true);
+    try {
+      await driver.saveJobcardQualityCheck(draft.id, { checklist: qcChecklist, notes: qcNotes || undefined });
+      const updated = await driver.setJobcardStatus(
+        draft.id,
+        'completed',
+        qcAllPassed ? undefined : { reason: qcOverrideReason.trim() }
+      );
+      applyLifecycleUpdate(updated);
+      toast('Quality check passed — job card completed');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not pass QC', 'error');
+    } finally {
+      setTransitioning(false);
+    }
+  }
+
+  async function deliverAndClose() {
+    if (!draft || transitioning || !deliveryDraft.customerSignedOff) return;
+    setTransitioning(true);
+    try {
+      await driver.saveJobcardDelivery(draft.id, {
+        odometerOut: deliveryDraft.odometerOut,
+        customerSignedOff: true,
+        deliveredAt: Date.now(),
+      });
+      const updated = await driver.setJobcardStatus(draft.id, 'closed');
+      applyLifecycleUpdate(updated);
+      toast('Delivered — job card closed');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Could not close job card', 'error');
+    } finally {
+      setTransitioning(false);
+    }
+  }
+
+  async function confirmReopen(reason: string) {
+    setReopenOpen(false);
+    await doTransition('in_progress', { reason });
+  }
+
+  async function confirmVoid(reason: string) {
+    setVoidOpen(false);
+    await doTransition('void', { reason });
+  }
+
   const canImport = booking != null && booking.serviceIds.length > 0;
 
   return (
@@ -234,6 +370,64 @@ export default function JobcardEditor({ id }: { id: string }) {
             })()}
         </div>
       </div>
+
+      {/* Lifecycle strip (docs/JOBCARD_LIFECYCLE_SPEC.md) — above the 7 billing sections,
+          which stay exactly as they were. */}
+      <LifecycleStrip
+        jc={draft}
+        transitioning={transitioning}
+        qcAllPassed={qcAllPassed}
+        qcOverrideFilled={qcOverrideReason.trim().length > 0}
+        deliverySignedOff={deliveryDraft.customerSignedOff ?? false}
+        onStartWork={() => doTransition('in_progress')}
+        onSendToQC={() => doTransition('quality_check')}
+        onPassQC={passQC}
+        onDeliver={deliverAndClose}
+        onReopen={() => setReopenOpen(true)}
+        onVoid={() => setVoidOpen(true)}
+      />
+
+      {/* Check-in panel — shown while open; optional, never blocks Start Work. */}
+      {draft.status === 'open' && (
+        <CheckInPanel checkIn={checkInDraft} onChange={setCheckInDraft} onSave={saveCheckIn} />
+      )}
+
+      {/* Quality check panel — shown during quality_check; the real gate for Pass QC. */}
+      {draft.status === 'quality_check' && (
+        <QualityCheckPanel
+          checklist={qcChecklist}
+          onChangeChecklist={setQcChecklist}
+          notes={qcNotes}
+          onChangeNotes={setQcNotes}
+          overrideReason={qcOverrideReason}
+          onChangeOverrideReason={setQcOverrideReason}
+          allPassed={qcAllPassed}
+        />
+      )}
+
+      {/* Delivery panel — shown once completed; gates Deliver -> Closed on sign-off. */}
+      {draft.status === 'completed' && (
+        <DeliveryPanel delivery={deliveryDraft} onChange={setDeliveryDraft} />
+      )}
+
+      <ReasonDialog
+        open={reopenOpen}
+        title="Reopen this job card?"
+        body="Moves it back to In Progress. A reason is required and stays on the status history."
+        placeholder="Reason (e.g. customer reported a defect, missed a panel)…"
+        confirmLabel="Reopen"
+        onCancel={() => setReopenOpen(false)}
+        onConfirm={confirmReopen}
+      />
+      <ReasonDialog
+        open={voidOpen}
+        title="Void this job card?"
+        body="Keeps the record (invoice number stays traceable) but excludes it from revenue and job-count totals. Not available from Completed or Closed."
+        placeholder="Reason (e.g. mis-created, customer walked away before work started)…"
+        confirmLabel="Void Job Card"
+        onCancel={() => setVoidOpen(false)}
+        onConfirm={confirmVoid}
+      />
 
       {/* Customer Details */}
       <Panel className="mt-4 p-4">
@@ -770,6 +964,352 @@ function BackLink() {
     >
       ← Job Cards
     </button>
+  );
+}
+
+// --- Lifecycle (docs/JOBCARD_LIFECYCLE_SPEC.md) -----------------------------------------
+
+const FUEL_LEVELS: NonNullable<JobcardCheckIn['fuelLevel']>[] = ['E', '1/4', '1/2', '3/4', 'F'];
+
+function LifecycleStrip({
+  jc,
+  transitioning,
+  qcAllPassed,
+  qcOverrideFilled,
+  deliverySignedOff,
+  onStartWork,
+  onSendToQC,
+  onPassQC,
+  onDeliver,
+  onReopen,
+  onVoid,
+}: {
+  jc: Jobcard;
+  transitioning: boolean;
+  qcAllPassed: boolean;
+  qcOverrideFilled: boolean;
+  deliverySignedOff: boolean;
+  onStartWork: () => void;
+  onSendToQC: () => void;
+  onPassQC: () => void;
+  onDeliver: () => void;
+  onReopen: () => void;
+  onVoid: () => void;
+}) {
+  const canVoid = jc.status === 'open' || jc.status === 'in_progress' || jc.status === 'quality_check';
+  const canReopen = jc.status === 'completed' || jc.status === 'closed';
+  const lastEntry = jc.statusHistory[jc.statusHistory.length - 1];
+
+  let cta: { label: string; onClick: () => void; disabled?: boolean; title?: string } | null = null;
+  if (jc.status === 'open') {
+    cta = { label: JOBCARD_NEXT_ACTION_LABEL.open!, onClick: onStartWork };
+  } else if (jc.status === 'in_progress') {
+    cta = { label: JOBCARD_NEXT_ACTION_LABEL.in_progress!, onClick: onSendToQC };
+  } else if (jc.status === 'quality_check') {
+    cta = {
+      label: qcAllPassed ? 'Pass QC → Completed' : 'Override & Complete',
+      onClick: onPassQC,
+      disabled: !qcAllPassed && !qcOverrideFilled,
+      title: qcAllPassed
+        ? undefined
+        : 'Check every item, or add an override note in Quality Check below.',
+    };
+  } else if (jc.status === 'completed') {
+    cta = {
+      label: 'Deliver → Closed',
+      onClick: onDeliver,
+      disabled: !deliverySignedOff,
+      title: deliverySignedOff ? undefined : 'Tick the customer sign-off checkbox in Delivery below first.',
+    };
+  }
+
+  return (
+    <Panel className="mt-4 p-4 print:hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="font-ui text-[0.65rem] uppercase tracking-[0.25em] text-pinstripe-cyan/80">
+            Lifecycle
+          </span>
+          <Badge tone={JOBCARD_STATUS_TONE[jc.status]}>{JOBCARD_STATUS_LABEL[jc.status]}</Badge>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {canReopen && (
+            <button
+              onClick={onReopen}
+              className="font-ui text-xs text-white/50 underline decoration-dotted transition-colors hover:text-goldBright"
+            >
+              Reopen this job card
+            </button>
+          )}
+          {canVoid && (
+            <Button variant="ghost" onClick={onVoid} disabled={transitioning}>
+              Void
+            </Button>
+          )}
+          {cta && (
+            <Button onClick={cta.onClick} disabled={transitioning || cta.disabled} title={cta.title}>
+              {transitioning ? 'Working…' : cta.label}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {jc.status === 'void' && lastEntry?.reason && (
+        <p className="mt-3 rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 font-body text-xs text-white/55">
+          Voided: {lastEntry.reason}
+        </p>
+      )}
+
+      {/* Status history — full audit trail incl. reopen/void reasons. */}
+      {jc.statusHistory.length > 0 && (
+        <details className="mt-3">
+          <summary className="cursor-pointer font-ui text-[0.7rem] uppercase tracking-wider text-white/40 hover:text-white/60">
+            Status history ({jc.statusHistory.length})
+          </summary>
+          <ol className="mt-2 flex flex-col gap-1.5">
+            {[...jc.statusHistory].reverse().map((h, i) => (
+              <li key={i} className="font-body text-xs text-white/55">
+                <span className="text-white/80">{JOBCARD_STATUS_LABEL[h.status]}</span>
+                {' · '}
+                {formatTimestamp(h.at)}
+                {h.by && <span className="text-white/35"> · {h.by}</span>}
+                {h.reason && <span className="text-white/45"> — “{h.reason}”</span>}
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+    </Panel>
+  );
+}
+
+function CheckInPanel({
+  checkIn,
+  onChange,
+  onSave,
+}: {
+  checkIn: JobcardCheckIn;
+  onChange: (c: JobcardCheckIn) => void;
+  onSave: () => void;
+}) {
+  return (
+    <Panel className="mt-4 p-4">
+      <SectionHeading eyebrow="Lifecycle" title="Vehicle Check-In" />
+      <p className="mt-1 font-body text-xs text-white/45">
+        Optional — doesn't block moving to In Progress if skipped.
+      </p>
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Field label="Odometer Reading (km)">
+          {(fid) => (
+            <TextInput
+              id={fid}
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={checkIn.odometerReading ?? ''}
+              onChange={(e) =>
+                onChange({
+                  ...checkIn,
+                  odometerReading: e.target.value === '' ? undefined : Number(e.target.value),
+                })
+              }
+            />
+          )}
+        </Field>
+        <Field label="Fuel Level">
+          {(fid) => (
+            <Select
+              id={fid}
+              value={checkIn.fuelLevel ?? ''}
+              onChange={(e) =>
+                onChange({
+                  ...checkIn,
+                  fuelLevel: (e.target.value || undefined) as JobcardCheckIn['fuelLevel'],
+                })
+              }
+            >
+              <option value="">—</option>
+              {FUEL_LEVELS.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <Field label="Key Tag Number">
+          {(fid) => (
+            <TextInput
+              id={fid}
+              value={checkIn.keyTagNumber ?? ''}
+              onChange={(e) => onChange({ ...checkIn, keyTagNumber: e.target.value })}
+            />
+          )}
+        </Field>
+        <Field label="Existing Damage Notes" className="sm:col-span-2">
+          {(fid) => (
+            <Textarea
+              id={fid}
+              placeholder="Pre-existing dents/scratches noted before work — protects both parties."
+              value={checkIn.existingDamageNotes ?? ''}
+              onChange={(e) => onChange({ ...checkIn, existingDamageNotes: e.target.value })}
+            />
+          )}
+        </Field>
+      </div>
+      <div className="mt-3 flex justify-end">
+        <Button variant="secondary" onClick={onSave}>
+          Save Check-In
+        </Button>
+      </div>
+    </Panel>
+  );
+}
+
+function QualityCheckPanel({
+  checklist,
+  onChangeChecklist,
+  notes,
+  onChangeNotes,
+  overrideReason,
+  onChangeOverrideReason,
+  allPassed,
+}: {
+  checklist: JobcardQcChecklistItem[];
+  onChangeChecklist: (c: JobcardQcChecklistItem[]) => void;
+  notes: string;
+  onChangeNotes: (n: string) => void;
+  overrideReason: string;
+  onChangeOverrideReason: (r: string) => void;
+  allPassed: boolean;
+}) {
+  const [newItem, setNewItem] = useState('');
+
+  function toggle(i: number) {
+    onChangeChecklist(checklist.map((c, idx) => (idx === i ? { ...c, passed: !c.passed } : c)));
+  }
+  function remove(i: number) {
+    onChangeChecklist(checklist.filter((_, idx) => idx !== i));
+  }
+  function add() {
+    const item = newItem.trim();
+    if (!item) return;
+    onChangeChecklist([...checklist, { item, passed: false }]);
+    setNewItem('');
+  }
+
+  return (
+    <Panel className="mt-4 p-4">
+      <SectionHeading eyebrow="Lifecycle" title="Quality Check" />
+      <ul className="mt-3 flex flex-col gap-1.5">
+        {checklist.map((c, i) => (
+          <li key={i} className="flex items-center gap-2 rounded-lg border border-white/10 bg-char3/50 px-3 py-2">
+            <input
+              type="checkbox"
+              checked={c.passed}
+              onChange={() => toggle(i)}
+              className="h-4 w-4 shrink-0 accent-gold"
+              aria-label={c.item}
+            />
+            <span className="flex-1 font-body text-sm text-white/80">{c.item}</span>
+            <button
+              onClick={() => remove(i)}
+              aria-label={`Remove ${c.item}`}
+              className="rounded p-1 text-white/35 transition-colors hover:text-pinstripe-red"
+            >
+              ✕
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2 flex gap-2">
+        <TextInput
+          value={newItem}
+          onChange={(e) => setNewItem(e.target.value)}
+          placeholder="Add a custom checklist item…"
+          aria-label="New checklist item"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              add();
+            }
+          }}
+        />
+        <Button variant="ghost" onClick={add}>
+          Add
+        </Button>
+      </div>
+      <div className="mt-3">
+        <Field label="Notes">
+          {(fid) => (
+            <Textarea id={fid} value={notes} onChange={(e) => onChangeNotes(e.target.value)} />
+          )}
+        </Field>
+      </div>
+      {!allPassed && (
+        <div className="mt-3">
+          <Field
+            label="Override Note (required to pass with unchecked items)"
+            hint="Explain why you're proceeding despite an unchecked item — this becomes the status-history reason."
+          >
+            {(fid) => (
+              <Textarea
+                id={fid}
+                value={overrideReason}
+                onChange={(e) => onChangeOverrideReason(e.target.value)}
+              />
+            )}
+          </Field>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function DeliveryPanel({
+  delivery,
+  onChange,
+}: {
+  delivery: JobcardDelivery;
+  onChange: (d: JobcardDelivery) => void;
+}) {
+  return (
+    <Panel className="mt-4 p-4">
+      <SectionHeading eyebrow="Lifecycle" title="Delivery" />
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Field label="Odometer Out (km)">
+          {(fid) => (
+            <TextInput
+              id={fid}
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={delivery.odometerOut ?? ''}
+              onChange={(e) =>
+                onChange({
+                  ...delivery,
+                  odometerOut: e.target.value === '' ? undefined : Number(e.target.value),
+                })
+              }
+            />
+          )}
+        </Field>
+      </div>
+      <label className="mt-3 flex cursor-pointer items-center gap-2">
+        <input
+          type="checkbox"
+          checked={delivery.customerSignedOff ?? false}
+          onChange={(e) => onChange({ ...delivery, customerSignedOff: e.target.checked })}
+          className="h-4 w-4 accent-gold"
+        />
+        <span className="font-ui text-xs font-medium uppercase tracking-wider text-white/60">
+          Customer signed off at handover
+        </span>
+      </label>
+      <p className="mt-1 font-body text-[0.7rem] text-white/40">
+        A checkbox recorded at handover, not a real e-signature. Required before Deliver → Closed.
+      </p>
+    </Panel>
   );
 }
 

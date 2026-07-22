@@ -1,6 +1,7 @@
 // Status vocabulary + presentation metadata, shared across admin screens.
 
-import type { BookingStatus, WorkItemStatus } from '../../shared/types';
+import type { BookingStatus, JobcardStatus, WorkItemStatus } from '../../shared/types';
+import { JOBCARD_FLOW } from '../../shared/data';
 
 /** The linear booking flow (cancelled is a side branch, not part of the ladder). */
 export const BOOKING_FLOW: BookingStatus[] = [
@@ -61,6 +62,46 @@ export const PAYMENT_MODE_LABEL: Record<string, string> = {
   card: 'Card',
   bank_transfer: 'Bank Transfer',
 };
+
+// --- job-card lifecycle status (docs/JOBCARD_LIFECYCLE_SPEC.md) -------------------------
+// JOBCARD_FLOW (the forward ladder) lives in src/shared/data.ts — single source of truth,
+// re-exported here so admin screens can import status vocabulary from one place.
+export { JOBCARD_FLOW };
+
+export const JOBCARD_STATUS_LABEL: Record<JobcardStatus, string> = {
+  open: 'Open',
+  in_progress: 'In Progress',
+  quality_check: 'Quality Check',
+  completed: 'Completed',
+  closed: 'Closed',
+  void: 'Void',
+};
+
+export const JOBCARD_STATUS_TONE: Record<JobcardStatus, string> = {
+  open: 'text-goldBright border-gold/40 bg-gold/10',
+  in_progress: 'text-neonGold border-neonGold/40 bg-neonGold/10',
+  quality_check: 'text-pinstripe-cyan border-pinstripe-cyan/40 bg-pinstripe-cyan/10',
+  completed: 'text-pinstripe-emerald border-pinstripe-emerald/40 bg-pinstripe-emerald/10',
+  closed: 'text-pinstripe-emerald border-pinstripe-emerald/50 bg-pinstripe-emerald/15',
+  // Muted/grey — deliberately NOT the red used for Cancel elsewhere (owner directive: void
+  // is an internal record correction, not a customer-facing failure).
+  void: 'text-white/55 border-white/25 bg-white/[0.06]',
+};
+
+/** The stage-aware quick-action label shown on kanban cards / the lifecycle strip. */
+export const JOBCARD_NEXT_ACTION_LABEL: Partial<Record<JobcardStatus, string>> = {
+  open: 'Start Work',
+  in_progress: 'Send to QC',
+  quality_check: 'Pass QC',
+  completed: 'Deliver',
+};
+
+/** Next forward status in the lifecycle, or null when terminal (closed) or void. */
+export function nextJobcardStatus(current: JobcardStatus): JobcardStatus | null {
+  const i = JOBCARD_FLOW.indexOf(current);
+  if (i === -1 || i >= JOBCARD_FLOW.length - 1) return null;
+  return JOBCARD_FLOW[i + 1];
+}
 
 // --- work-item status (Wave 2 daily work tracking) --------------------------------------
 

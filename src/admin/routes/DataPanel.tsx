@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { JobcardStatus } from '../../shared/types';
 import { useJobcards, useWorkItems } from '../lib/useDriver';
 import { buildQuery, navigate } from '../lib/router';
 import { inr } from '../lib/format';
@@ -8,10 +9,12 @@ import {
   monthlyJobCounts,
   repeatCustomerRate,
   revenueByMonth,
+  statusBreakdown,
   topServices,
   totalOutstanding,
 } from '../lib/analytics';
-import { Panel, SectionHeading, Spinner } from '../ui';
+import { JOBCARD_FLOW, JOBCARD_STATUS_LABEL, JOBCARD_STATUS_TONE } from '../lib/status';
+import { Badge, Panel, SectionHeading, Spinner } from '../ui';
 
 // Admin dashboard home = Data panel (Wave 2). Every figure is computed ONLY from real
 // recorded job cards / work items, each labelled with its date range. Empty inputs show
@@ -32,7 +35,10 @@ export default function DataPanel() {
       services: topServices(jc, 5),
       repeat: repeatCustomerRate(jc),
       hours: hoursByWeek(wi, 6),
-      totalJobs: jc.length,
+      status: statusBreakdown(jc),
+      // "Real data exists" excludes void-only histories — a studio whose only job card was
+      // voided has genuinely nothing to show yet, same honesty-gate reasoning as elsewhere.
+      totalJobs: jc.filter((j) => j.status !== 'void').length,
     };
   }, [jobcards, workItems]);
 
@@ -149,6 +155,25 @@ export default function DataPanel() {
                 emptyLabel="No hours logged yet"
               />
             </button>
+          </Panel>
+
+          {/* Job-card lifecycle breakdown (docs/JOBCARD_LIFECYCLE_SPEC.md item 7) — real
+              recorded counts per stage; void included as its own line rather than hidden. */}
+          <Panel className="p-4 md:col-span-2">
+            <CardHead title="Job Cards by Stage" sub="Current lifecycle status · all job cards to date" />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[...JOBCARD_FLOW, 'void' as const].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => navigate(`/jobcards${buildQuery({ status: s })}`)}
+                  className="rounded-lg p-0.5 transition-colors hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50"
+                >
+                  <Badge tone={JOBCARD_STATUS_TONE[s]}>
+                    {JOBCARD_STATUS_LABEL[s]} · {stats.status[s]}
+                  </Badge>
+                </button>
+              ))}
+            </div>
           </Panel>
 
           {/* Top services — each row drills to job cards filtered by that service. */}

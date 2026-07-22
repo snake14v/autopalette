@@ -10,6 +10,8 @@ import type {
   Booking,
   BookingStatus,
   Jobcard,
+  JobcardStatus,
+  JobcardStatusHistoryEntry,
   Employee,
   WorkItem,
   WorkItemStatus,
@@ -39,6 +41,10 @@ import {
   blankJobcard,
   normalizePhone,
   round2,
+  assertValidJobcardTransition,
+  assertQualityCheckPassed,
+  assertDeliverySignedOff,
+  normalizeJobcardStatus,
   type DataDriver,
   type AuthState,
   type WorkItemInput,
@@ -76,7 +82,7 @@ export function makeFirestoreDriver(): DataDriver {
   }
 
   function mapJobcard(id: string, data: Record<string, unknown>): Jobcard {
-    return { ...(data as Omit<Jobcard, 'id'>), id };
+    return normalizeJobcardStatus({ ...(data as Omit<Jobcard, 'id'>), id });
   }
 
   function mapEmployee(id: string, data: Record<string, unknown>): Employee {
@@ -333,6 +339,74 @@ export function makeFirestoreDriver(): DataDriver {
       return onSnapshot(q, (snap) => {
         cb(snap.docs.map((d) => mapJobcard(d.id, d.data())));
       });
+    },
+
+    // --- Job-card lifecycle (docs/JOBCARD_LIFECYCLE_SPEC.md) -------------------------------
+
+    async setJobcardStatus(id, status, opts) {
+      // currentActorId() reads users/{uid} — a separate read outside the transaction below,
+      // same pattern addWorkNote already uses; only the jobcard doc itself needs transactional
+      // read-validate-write so concurrent admins can never race past an illegal transition.
+      const by = await currentActorId();
+      const ref = doc(db, 'jobcards', id);
+      return runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) throw new Error(`Job card ${id} not found`);
+        const current = mapJobcard(snap.id, snap.data());
+        assertValidJobcardTransition(current.status, status, opts);
+        if (current.status === 'quality_check' && status === 'completed') {
+          assertQualityCheckPassed(current, opts?.reason);
+        }
+        if (current.status === 'completed' && status === 'closed') {
+          assertDeliverySignedOff(current);
+        }
+        const entry: JobcardStatusHistoryEntry = {
+          status,
+          at: Date.now(),
+          by,
+          ...(opts?.reason ? { reason: opts.reason } : {}),
+        };
+        const next: Jobcard = {
+          ...current,
+          status,
+          statusHistory: [...current.statusHistory, entry],
+        };
+        const { id: _drop, ...data } = next;
+        tx.set(ref, data, { merge: true });
+        return next;
+      });
+    },
+
+    async saveJobcardCheckIn(id, checkIn) {
+      const ref = doc(db, 'jobcards', id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) throw new Error(`Job card ${id} not found`);
+      const current = mapJobcard(snap.id, snap.data());
+      const next: Jobcard = { ...current, checkIn };
+      await updateDoc(ref, { checkIn });
+      return next;
+    },
+
+    async saveJobcardQualityCheck(id, qc) {
+      const ref = doc(db, 'jobcards', id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) throw new Error(`Job card ${id} not found`);
+      const current = mapJobcard(snap.id, snap.data());
+      const stamped = { ...qc, checkedAt: qc.checkedAt ?? Date.now() };
+      const next: Jobcard = { ...current, qualityCheck: stamped };
+      await updateDoc(ref, { qualityCheck: stamped });
+      return next;
+    },
+
+    async saveJobcardDelivery(id, delivery) {
+      const ref = doc(db, 'jobcards', id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) throw new Error(`Job card ${id} not found`);
+      const current = mapJobcard(snap.id, snap.data());
+      const stamped = { ...delivery, deliveredAt: delivery.deliveredAt ?? Date.now() };
+      const next: Jobcard = { ...current, delivery: stamped };
+      await updateDoc(ref, { delivery: stamped });
+      return next;
     },
 
     // --- Wave 2: roster -------------------------------------------------------------------

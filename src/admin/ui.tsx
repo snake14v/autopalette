@@ -449,6 +449,95 @@ export function ConfirmDialog({
   );
 }
 
+// --- Reason dialog (confirm + required free-text reason) --------------------------------
+
+/**
+ * Like ConfirmDialog, but collects a REQUIRED free-text reason before confirming — used by
+ * job-card Void and Reopen (docs/JOBCARD_LIFECYCLE_SPEC.md), where the driver rejects the
+ * transition without one. Confirm stays disabled until the field is non-empty.
+ */
+export function ReasonDialog({
+  open,
+  title,
+  body,
+  placeholder = 'Reason…',
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  danger = false,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  body?: ReactNode;
+  placeholder?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  danger?: boolean;
+  onConfirm: (reason: string) => void;
+  onCancel: () => void;
+}) {
+  const [reason, setReason] = useState('');
+  const textRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (open) setReason('');
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    textRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onCancel]);
+
+  if (!open) return null;
+  const trimmed = reason.trim();
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-sm rounded-xl border border-white/12 bg-char2 p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="font-display text-base font-bold uppercase tracking-wide text-goldBright">
+          {title}
+        </h3>
+        {body && <div className="mt-2 font-body text-sm text-white/70">{body}</div>}
+        <Textarea
+          ref={textRef}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder={placeholder}
+          aria-label="Reason"
+          className="mt-3"
+        />
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="ghost" onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+          <Button
+            variant={danger ? 'danger' : 'primary'}
+            disabled={!trimmed}
+            onClick={() => onConfirm(trimmed)}
+          >
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // --- Checkbox (bulk-select control) -----------------------------------------------------
 
 export function Checkbox({

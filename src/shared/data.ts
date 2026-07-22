@@ -15,6 +15,11 @@ import type {
   Booking,
   BookingStatus,
   Jobcard,
+  JobcardStatus,
+  JobcardStatusHistoryEntry,
+  JobcardCheckIn,
+  JobcardQualityCheck,
+  JobcardDelivery,
   Employee,
   WorkItem,
   WorkItemStatus,
@@ -70,6 +75,124 @@ export function computeJobcardPricing(
 export function normalizePhone(phone: string): string {
   const digits = (phone || '').replace(/\D/g, '');
   return digits.slice(-10);
+}
+
+// ---------------------------------------------------------------------------------------
+// Job-card lifecycle (docs/JOBCARD_LIFECYCLE_SPEC.md) — shared by both drivers so the state
+// machine can never drift between demo and live (same reasoning as computeJobcardPricing).
+// ---------------------------------------------------------------------------------------
+
+/** The linear forward lifecycle. 'void' is a side branch, not part of the ladder. */
+export const JOBCARD_FLOW: JobcardStatus[] = [
+  'open',
+  'in_progress',
+  'quality_check',
+  'completed',
+  'closed',
+];
+
+/**
+ * Default QC checklist template — generic enough for bike or car service (per spec: do not
+ * hardcode Autopalette-only language here). Seeded as defaults only; admin can add/remove
+ * rows per job card once seeded into a draft.
+ */
+export const DEFAULT_QC_CHECKLIST: string[] = [
+  'Exterior clean & inspected',
+  'Interior clean (if applicable)',
+  'All work items completed per job card',
+  'Test drive / test run done',
+  'No new damage caused during service',
+  'Customer belongings returned',
+];
+
+/**
+ * Validates a Jobcard status transition per docs/JOBCARD_LIFECYCLE_SPEC.md. Throws a
+ * descriptive Error on any illegal transition — called by BOTH drivers before writing, so the
+ * rule is enforced server-side (Firestore) and in the demo driver identically, never only
+ * UI-gated.
+ *
+ *   open -> in_progress -> quality_check -> completed -> closed   (strictly sequential, no skips)
+ *   completed | closed -> in_progress                             (reopen, REQUIRES opts.reason)
+ *   open | in_progress | quality_check -> void                    (REQUIRES opts.reason)
+ *   anything else (incl. any move out of 'void') is illegal.
+ */
+export function assertValidJobcardTransition(
+  from: JobcardStatus,
+  to: JobcardStatus,
+  opts?: { reason?: string }
+): void {
+  if (from === to) return; // idempotent no-op — always harmless, never needs a reason
+
+  if (to === 'void') {
+    if (from !== 'open' && from !== 'in_progress' && from !== 'quality_check') {
+      throw new Error(`Cannot void a job card from status "${from}".`);
+    }
+    if (!opts?.reason?.trim()) {
+      throw new Error('Voiding a job card requires a reason.');
+    }
+    return;
+  }
+
+  if (from === 'void') {
+    throw new Error('A voided job card cannot change status.');
+  }
+
+  const isReopen = (from === 'completed' || from === 'closed') && to === 'in_progress';
+  if (isReopen) {
+    if (!opts?.reason?.trim()) {
+      throw new Error('Reopening a job card requires a reason.');
+    }
+    return;
+  }
+
+  // completed -> closed is the legitimate forward step (Deliver) and must fall
+  // through to the sequential-flow check below. Only block the OTHER exits from
+  // the two late states: closed is terminal (except reopen, handled above), and
+  // completed can't jump anywhere but closed.
+  if (from === 'closed' || (from === 'completed' && to !== 'closed')) {
+    throw new Error(`Cannot move a job card from "${from}" to "${to}" — use reopen instead.`);
+  }
+
+  const fi = JOBCARD_FLOW.indexOf(from);
+  const ti = JOBCARD_FLOW.indexOf(to);
+  if (fi === -1 || ti === -1 || ti !== fi + 1) {
+    throw new Error(`Illegal job card status transition: "${from}" -> "${to}".`);
+  }
+}
+
+/**
+ * The quality_check -> completed gate: every checklist item must be passed, OR the admin
+ * supplies an explicit override reason. Not just UI-gated — this is what makes it a real
+ * quality gate rather than theatre (per spec). Called from setJobcardStatus in both drivers.
+ */
+export function assertQualityCheckPassed(jc: Jobcard, overrideReason?: string): void {
+  const checklist = jc.qualityCheck?.checklist ?? [];
+  const allPassed = checklist.length > 0 && checklist.every((c) => c.passed);
+  if (allPassed) return;
+  if (overrideReason?.trim()) return;
+  throw new Error(
+    'Quality check has unchecked items — check every item, or override with a note to proceed anyway.'
+  );
+}
+
+/** The completed -> closed gate: customer sign-off must be recorded before delivery closes the job. */
+export function assertDeliverySignedOff(jc: Jobcard): void {
+  if (!jc.delivery?.customerSignedOff) {
+    throw new Error('Delivery requires the customer sign-off checkbox to be ticked.');
+  }
+}
+
+/**
+ * Back-fills lifecycle fields on Jobcards written before this spec landed (additive
+ * migration, read-time only — never rewrites storage). Missing status defaults to 'open'
+ * with a single synthesized statusHistory entry, mirroring how the field would have looked
+ * had it existed at creation time.
+ */
+export function normalizeJobcardStatus(jc: Jobcard): Jobcard {
+  if (jc.status && jc.statusHistory) return jc;
+  const status: JobcardStatus = jc.status ?? 'open';
+  const statusHistory: JobcardStatusHistoryEntry[] = jc.statusHistory ?? [{ status, at: Date.now() }];
+  return { ...jc, status, statusHistory };
 }
 
 // ---------------------------------------------------------------------------------------
@@ -132,6 +255,22 @@ export interface DataDriver {
    */
   setJobcardPaymentStatus(id: string, status: Jobcard['payment']['status']): Promise<void>;
 
+  // --- Job-card lifecycle (docs/JOBCARD_LIFECYCLE_SPEC.md) -------------------------------
+  /**
+   * Validates + applies a JobcardStatus transition (see assertValidJobcardTransition),
+   * appends a statusHistory entry, and returns the updated job card. Rejects illegal jumps,
+   * void from completed/closed, and reopen (completed/closed -> in_progress) without
+   * `opts.reason`. `opts.reason` also doubles as the required override note for the
+   * quality_check -> completed gate when an item is left unchecked (assertQualityCheckPassed).
+   */
+  setJobcardStatus(id: string, status: JobcardStatus, opts?: { reason?: string }): Promise<Jobcard>;
+  /** Vehicle check-in fields — optional, doesn't block moving to in_progress if skipped. */
+  saveJobcardCheckIn(id: string, checkIn: JobcardCheckIn): Promise<Jobcard>;
+  /** QC checklist + notes. Stamps checkedAt if not supplied. */
+  saveJobcardQualityCheck(id: string, qc: JobcardQualityCheck): Promise<Jobcard>;
+  /** Delivery odometer-out + sign-off. Stamps deliveredAt if not supplied. */
+  saveJobcardDelivery(id: string, delivery: JobcardDelivery): Promise<Jobcard>;
+
   // --- Wave 2: roster ---------------------------------------------------------------------
   subscribeEmployees(cb: (employees: Employee[]) => void): () => void;
   saveEmployee(e: Employee): Promise<Employee>;
@@ -170,6 +309,7 @@ export function blankPricing(): Jobcard['pricing'] {
 }
 
 export function blankJobcard(id: string): Jobcard {
+  const now = Date.now();
   return {
     id,
     invoiceNumber: '',
@@ -182,6 +322,8 @@ export function blankJobcard(id: string): Jobcard {
     payment: { mode: '', status: 'unpaid' },
     warranty: {},
     remarks: {},
+    status: 'open',
+    statusHistory: [{ status: 'open', at: now }],
   };
 }
 
@@ -481,7 +623,8 @@ export const localDriver: DataDriver = {
 
   async getJobcard(id) {
     const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
-    return jobcards[id] ?? null;
+    const jc = jobcards[id];
+    return jc ? normalizeJobcardStatus(jc) : null;
   },
 
   async setJobcardPaymentStatus(id, status) {
@@ -496,10 +639,76 @@ export const localDriver: DataDriver = {
   subscribeJobcards(cb) {
     const emit = () => {
       const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
-      cb(Object.values(jobcards).sort((a, b) => (a.date < b.date ? 1 : -1)));
+      cb(
+        Object.values(jobcards)
+          .map(normalizeJobcardStatus)
+          .sort((a, b) => (a.date < b.date ? 1 : -1))
+      );
     };
     emit();
     return onStoreChanged(LOCAL_KEYS.jobcards, emit);
+  },
+
+  // --- Job-card lifecycle (docs/JOBCARD_LIFECYCLE_SPEC.md) --------------------------------
+
+  async setJobcardStatus(id, status, opts) {
+    const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
+    const jc = jobcards[id];
+    if (!jc) throw new Error(`Job card ${id} not found`);
+    const current = normalizeJobcardStatus(jc);
+    assertValidJobcardTransition(current.status, status, opts);
+    if (current.status === 'quality_check' && status === 'completed') {
+      assertQualityCheckPassed(current, opts?.reason);
+    }
+    if (current.status === 'completed' && status === 'closed') {
+      assertDeliverySignedOff(current);
+    }
+    const entry: JobcardStatusHistoryEntry = {
+      status,
+      at: Date.now(),
+      by: currentActorId(),
+      ...(opts?.reason ? { reason: opts.reason } : {}),
+    };
+    const updated: Jobcard = {
+      ...current,
+      status,
+      statusHistory: [...current.statusHistory, entry],
+    };
+    jobcards[id] = updated;
+    writeStore(LOCAL_KEYS.jobcards, jobcards);
+    return updated;
+  },
+
+  async saveJobcardCheckIn(id, checkIn) {
+    const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
+    const jc = jobcards[id];
+    if (!jc) throw new Error(`Job card ${id} not found`);
+    const updated: Jobcard = { ...normalizeJobcardStatus(jc), checkIn };
+    jobcards[id] = updated;
+    writeStore(LOCAL_KEYS.jobcards, jobcards);
+    return updated;
+  },
+
+  async saveJobcardQualityCheck(id, qc) {
+    const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
+    const jc = jobcards[id];
+    if (!jc) throw new Error(`Job card ${id} not found`);
+    const stamped = { ...qc, checkedAt: qc.checkedAt ?? Date.now() };
+    const updated: Jobcard = { ...normalizeJobcardStatus(jc), qualityCheck: stamped };
+    jobcards[id] = updated;
+    writeStore(LOCAL_KEYS.jobcards, jobcards);
+    return updated;
+  },
+
+  async saveJobcardDelivery(id, delivery) {
+    const jobcards = readStore<Jobcard>(LOCAL_KEYS.jobcards);
+    const jc = jobcards[id];
+    if (!jc) throw new Error(`Job card ${id} not found`);
+    const stamped = { ...delivery, deliveredAt: delivery.deliveredAt ?? Date.now() };
+    const updated: Jobcard = { ...normalizeJobcardStatus(jc), delivery: stamped };
+    jobcards[id] = updated;
+    writeStore(LOCAL_KEYS.jobcards, jobcards);
+    return updated;
   },
 
   // --- Wave 2: roster ---------------------------------------------------------------------

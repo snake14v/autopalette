@@ -3,13 +3,23 @@
 // to a saved Jobcard / WorkItem / Customer. Callers label each with its date range and show
 // "No data yet" empty states when the inputs are empty.
 
-import type { Customer, Jobcard, WorkItem } from '../../shared/types';
+import type { Customer, Jobcard, JobcardStatus, WorkItem } from '../../shared/types';
 import { SERVICE_CATALOG } from '../../shared/catalog';
 import { monthKey, monthKeyOffset, weekKey } from './dates';
 
 const LABEL_BY_ID = new Map(SERVICE_CATALOG.map((s) => [s.id, s.label]));
 
-/** Jobs counted this-vs-last calendar month, keyed off Jobcard.date. */
+/**
+ * Voided job cards (docs/JOBCARD_LIFECYCLE_SPEC.md) are cancelled records — excluded from
+ * every revenue/job-count/spend roll-up below (spec item 7), while still appearing,
+ * clearly badged, in job-card lists and per-customer history. Filtered once here so every
+ * analytics function is void-safe by construction, not by each call site remembering to ask.
+ */
+function excludeVoid(jobcards: Jobcard[]): Jobcard[] {
+  return jobcards.filter((jc) => jc.status !== 'void');
+}
+
+/** Jobs counted this-vs-last calendar month, keyed off Jobcard.date. Void jobs excluded. */
 export function monthlyJobCounts(jobcards: Jobcard[]): {
   thisMonth: number;
   lastMonth: number;
@@ -20,7 +30,7 @@ export function monthlyJobCounts(jobcards: Jobcard[]): {
   const lastKey = monthKeyOffset(-1);
   let thisMonth = 0;
   let lastMonth = 0;
-  for (const jc of jobcards) {
+  for (const jc of excludeVoid(jobcards)) {
     const k = monthKey(jc.date);
     if (k === thisKey) thisMonth++;
     else if (k === lastKey) lastMonth++;
@@ -28,13 +38,16 @@ export function monthlyJobCounts(jobcards: Jobcard[]): {
   return { thisMonth, lastMonth, thisKey, lastKey };
 }
 
-/** Revenue (Σ totalAmount) bucketed by month, most-recent last. Optionally limited to N months. */
+/**
+ * Revenue (Σ totalAmount) bucketed by month, most-recent last. Optionally limited to N
+ * months. Void jobs excluded.
+ */
 export function revenueByMonth(
   jobcards: Jobcard[],
   limit = 6
 ): { key: string; total: number }[] {
   const byMonth = new Map<string, number>();
-  for (const jc of jobcards) {
+  for (const jc of excludeVoid(jobcards)) {
     const k = monthKey(jc.date);
     byMonth.set(k, (byMonth.get(k) ?? 0) + (jc.pricing.totalAmount || 0));
   }
@@ -43,21 +56,38 @@ export function revenueByMonth(
   return tail.map(([key, total]) => ({ key, total }));
 }
 
-/** Total outstanding = Σ balanceDue over job cards not marked fully paid. */
+/** Total outstanding = Σ balanceDue over non-void job cards not marked fully paid. */
 export function totalOutstanding(jobcards: Jobcard[]): number {
-  return jobcards.reduce(
+  return excludeVoid(jobcards).reduce(
     (sum, jc) => (jc.payment.status === 'paid' ? sum : sum + Math.max(0, jc.pricing.balanceDue || 0)),
     0
   );
 }
 
-/** Top-N services by how many job-card line rows reference them (catalog rows only). */
+/**
+ * Count of non-void job cards per lifecycle stage (incl. 'void' itself, so the Data panel
+ * can show it as its own line rather than silently dropping it). Real recorded data only.
+ */
+export function statusBreakdown(jobcards: Jobcard[]): Record<JobcardStatus, number> {
+  const counts: Record<JobcardStatus, number> = {
+    open: 0,
+    in_progress: 0,
+    quality_check: 0,
+    completed: 0,
+    closed: 0,
+    void: 0,
+  };
+  for (const jc of jobcards) counts[jc.status] = (counts[jc.status] ?? 0) + 1;
+  return counts;
+}
+
+/** Top-N services by how many job-card line rows reference them (catalog rows only). Void jobs excluded. */
 export function topServices(
   jobcards: Jobcard[],
   n = 5
 ): { id: string; label: string; count: number }[] {
   const counts = new Map<string, number>();
-  for (const jc of jobcards) {
+  for (const jc of excludeVoid(jobcards)) {
     for (const row of jc.services) {
       if (row.serviceId === 'custom') continue; // ad-hoc extras aren't catalog services
       counts.set(row.serviceId, (counts.get(row.serviceId) ?? 0) + 1);
@@ -80,7 +110,7 @@ export function repeatCustomerRate(jobcards: Jobcard[]): {
   rate: number;
 } {
   const byPhone = new Map<string, number>();
-  for (const jc of jobcards) {
+  for (const jc of excludeVoid(jobcards)) {
     const key = (jc.customer.phone || '').replace(/\D/g, '').slice(-10);
     if (!key) continue;
     byPhone.set(key, (byPhone.get(key) ?? 0) + 1);
@@ -115,14 +145,14 @@ export interface CustomerRollup {
   outstanding: number; // Σ balanceDue where not paid
 }
 
-/** Roll up a single customer's job-card history by matching normalized phone. */
+/** Roll up a single customer's job-card history by matching normalized phone. Void jobs excluded. */
 export function rollupCustomer(phone: string, jobcards: Jobcard[]): CustomerRollup {
   const key = (phone || '').replace(/\D/g, '').slice(-10);
   let visits = 0;
   let lastVisit: string | undefined;
   let lifetimeSpend = 0;
   let outstanding = 0;
-  for (const jc of jobcards) {
+  for (const jc of excludeVoid(jobcards)) {
     const jcKey = (jc.customer.phone || '').replace(/\D/g, '').slice(-10);
     if (jcKey !== key) continue;
     visits++;

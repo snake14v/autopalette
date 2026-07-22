@@ -22,6 +22,50 @@ export interface Booking {
   jobcardId?: string; // set when admin opens a job card
 }
 
+// docs/JOBCARD_LIFECYCLE_SPEC.md — the professional service-centre lifecycle. Additive to the
+// wave-1/2/3 billing model above; every field below is new, nothing existing changes shape.
+export type JobcardStatus =
+  | 'open'
+  | 'in_progress'
+  | 'quality_check'
+  | 'completed'
+  | 'closed'
+  | 'void';
+
+export interface JobcardStatusHistoryEntry {
+  status: JobcardStatus;
+  at: number; // ms epoch
+  by?: string; // 'admin' or an Employee.id — who made the transition
+  /** Required by the driver for reopen (completed/closed -> in_progress) and void. */
+  reason?: string;
+}
+
+export interface JobcardCheckIn {
+  odometerReading?: number;
+  fuelLevel?: 'E' | '1/4' | '1/2' | '3/4' | 'F';
+  existingDamageNotes?: string;
+  keyTagNumber?: string;
+  checkedInAt?: number; // ms epoch
+}
+
+export interface JobcardQcChecklistItem {
+  item: string;
+  passed: boolean;
+}
+
+export interface JobcardQualityCheck {
+  checklist: JobcardQcChecklistItem[];
+  notes?: string;
+  checkedAt?: number; // ms epoch
+}
+
+export interface JobcardDelivery {
+  odometerOut?: number;
+  deliveredAt?: number; // ms epoch
+  /** A checkbox admin ticks at handover, not a real e-signature (out of scope). */
+  customerSignedOff?: boolean;
+}
+
 export interface Jobcard {
   // = the owner's full field list
   id: string;
@@ -59,6 +103,12 @@ export interface Jobcard {
     customerRequests?: string;
     deliveryDateTime?: string;
   };
+  // --- Job-card lifecycle (docs/JOBCARD_LIFECYCLE_SPEC.md) -------------------------------
+  status: JobcardStatus; // defaults 'open' on create
+  statusHistory: JobcardStatusHistoryEntry[];
+  checkIn?: JobcardCheckIn;
+  qualityCheck?: JobcardQualityCheck;
+  delivery?: JobcardDelivery;
 }
 
 // ---------------------------------------------------------------------------------------

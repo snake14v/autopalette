@@ -101,6 +101,13 @@ function InvoiceSheet({ jc }: { jc: Jobcard }) {
               >
                 Tax Invoice
               </p>
+              {/* Void badge (docs/JOBCARD_LIFECYCLE_SPEC.md) — "clearly badged everywhere it
+                  appears"; provenance travels with the number, never silently upgraded. */}
+              {jc.status === 'void' && (
+                <p className="mt-1 inline-block rounded border border-[#999] px-2 py-0.5 text-xs font-bold uppercase tracking-widest text-[#666]">
+                  Void — not a valid invoice
+                </p>
+              )}
             </div>
             <div className="text-right text-sm">
               <p className="text-[#1a1a1a]">
