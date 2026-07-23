@@ -216,8 +216,15 @@ A timetable-style work system for the ~5-person crew, plus richer customer track
   surface on the linked booking's public timeline — the customer sees granular,
   admin-curated progress ("Paint correction stage 2 done, PPF tomorrow"), never
   internal notes. Default = NOT customer-visible; flagging is an explicit toggle.
+  Delivery path (live-safe, WAVE5 section-D pattern): at append time the driver
+  mirrors each customerVisible note onto `Booking.customerNotes: {at, by, text}[]`
+  (booking resolved via the work item's own bookingId or its jobcard's); the
+  customer app reads ONLY the booking doc it already has get access to — never a
+  work_items query, which live rules deny to unauthenticated customers.
 - **Rules (live)**: staff may update only their own items' status/notes/timestamps;
-  roster + confirm + reassign + hours adjustments are admin-only.
+  roster + confirm + reassign + hours adjustments are admin-only. On bookings,
+  staff may update ONLY the customerNotes mirror field (notes are authored from
+  My Day, a staff-only view) — every other booking field stays admin-only.
 
 ### Wave 2 — Customers panel + data panel (owner directive)
 - **Customer registry**: `customers` keyed by normalized 10-digit phone —

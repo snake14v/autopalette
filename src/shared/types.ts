@@ -9,6 +9,15 @@ export type BookingStatus =
   | 'delivered'
   | 'cancelled';
 
+/** One customer-visible workshop note as mirrored onto Booking.customerNotes — the
+    customerVisible subset of a WorkItemNote, minus the flag (everything here is visible
+    by construction). */
+export interface BookingCustomerNote {
+  at: number; // ms epoch
+  by: string; // 'admin' or an Employee.id — internal attribution, never rendered to the customer
+  text: string;
+}
+
 export interface Booking {
   id: string;
   createdAt: number; // ms epoch (Firestore Timestamp -> millis at the driver boundary)
@@ -26,6 +35,12 @@ export interface Booking {
   // (firestore.rules for jobcards stay admin/staff-only, unchanged). Absent/undefined = no
   // stage to show (jobcard open, closed, void, or never linked).
   jobcardStage?: 'working' | 'quality_check' | 'ready';
+  // Same section-D pattern for workshop notes: every WorkItemNote flagged customerVisible is
+  // mirrored here by addWorkNote (both drivers) at append time — booking resolved via the
+  // work item's own bookingId or its jobcard's. The customer app reads ONLY this field, never
+  // work_items (admin/staff-only in firestore.rules; an unauthenticated work_items query dies
+  // permission-denied on live). Source of truth stays WorkItemNote on the work item.
+  customerNotes?: BookingCustomerNote[];
 }
 
 // docs/JOBCARD_LIFECYCLE_SPEC.md — the professional service-centre lifecycle. Additive to the

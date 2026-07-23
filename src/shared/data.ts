@@ -13,6 +13,7 @@
 
 import type {
   Booking,
+  BookingCustomerNote,
   BookingStatus,
   Jobcard,
   JobcardStatus,
@@ -219,6 +220,15 @@ export function jobcardStageForBookingMirror(status: JobcardStatus): BookingJobc
   return null; // open / closed / void -> no stage to show
 }
 
+/**
+ * Projects a customerVisible WorkItemNote into the shape mirrored onto Booking.customerNotes
+ * (see types.ts). Called by BOTH drivers' addWorkNote — shared here so the mirrored shape can
+ * never drift between demo and live, same reasoning as jobcardStageForBookingMirror above.
+ */
+export function toBookingCustomerNote(note: WorkItemNote): BookingCustomerNote {
+  return { at: note.at, by: note.by, text: note.text };
+}
+
 // ---------------------------------------------------------------------------------------
 // Wave 2 auth shape
 // ---------------------------------------------------------------------------------------
@@ -319,8 +329,10 @@ export interface DataDriver {
   // --- Wave 2: customer registry -----------------------------------------------------------
   subscribeCustomers(cb: (customers: Customer[]) => void): () => void;
   saveCustomer(c: Customer): Promise<Customer>;
-  /** Chronological customer-visible notes from work items linked to this booking or its jobcard. */
-  subscribeCustomerNotes(bookingId: string, cb: (notes: WorkItemNote[]) => void): () => void;
+  /** Chronological customer-visible notes for a booking, read ONLY from the booking doc's
+      customerNotes mirror (see Booking.customerNotes) — never from work_items, which the
+      unauthenticated customer app has no read access to under the live firestore.rules. */
+  subscribeCustomerNotes(bookingId: string, cb: (notes: BookingCustomerNote[]) => void): () => void;
 }
 
 export function blankPricing(): Jobcard['pricing'] {
@@ -877,6 +889,25 @@ export const localDriver: DataDriver = {
     item.notes = [...item.notes, note];
     items[id] = item;
     writeStore(LOCAL_KEYS.workItems, items);
+
+    // Customer-visible notes are mirrored onto the linked booking (Booking.customerNotes,
+    // section-D pattern — same as jobcardStage). Booking resolved via the work item's own
+    // bookingId, or through its jobcard for items created after conversion. No linked
+    // booking (walk-in jobcard / free-text task) -> nothing to mirror, no customer surface.
+    if (customerVisible) {
+      const bookingId =
+        item.bookingId ??
+        (item.jobcardId ? readStore<Jobcard>(LOCAL_KEYS.jobcards)[item.jobcardId]?.bookingId : undefined);
+      if (bookingId) {
+        const bookings = readStore<Booking>(LOCAL_KEYS.bookings);
+        const booking = bookings[bookingId];
+        if (booking) {
+          booking.customerNotes = [...(booking.customerNotes ?? []), toBookingCustomerNote(note)];
+          bookings[bookingId] = booking;
+          writeStore(LOCAL_KEYS.bookings, bookings);
+        }
+      }
+    }
   },
 
   // --- Wave 2: customer registry -------------------------------------------------------------
@@ -900,25 +931,16 @@ export const localDriver: DataDriver = {
   },
 
   subscribeCustomerNotes(bookingId, cb) {
+    // Reads ONLY the booking doc's customerNotes mirror — never work_items. The customer app
+    // could read work_items in demo, but not on live (admin/staff-only rules); both drivers
+    // read the same single place so demo can never mask a live permission failure again.
     const emit = () => {
       const bookings = readStore<Booking>(LOCAL_KEYS.bookings);
-      const jobcardId = bookings[bookingId]?.jobcardId;
-      const items = readStore<WorkItem>(LOCAL_KEYS.workItems);
-      const relevant = Object.values(items).filter(
-        (w) => w.bookingId === bookingId || (jobcardId && w.jobcardId === jobcardId)
-      );
-      const notes = relevant
-        .flatMap((w) => w.notes.filter((n) => n.customerVisible))
-        .sort((a, b) => a.at - b.at);
+      const notes = [...(bookings[bookingId]?.customerNotes ?? [])].sort((a, b) => a.at - b.at);
       cb(notes);
     };
     emit();
-    const unsubWorkItems = onStoreChanged(LOCAL_KEYS.workItems, emit);
-    const unsubBookings = onStoreChanged(LOCAL_KEYS.bookings, emit);
-    return () => {
-      unsubWorkItems();
-      unsubBookings();
-    };
+    return onStoreChanged(LOCAL_KEYS.bookings, emit);
   },
 };
 

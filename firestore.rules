@@ -64,12 +64,18 @@ service cloud.firestore {
       allow create: if isValidBookingCreate(request.resource.data);
       allow get: if true; // booking ID itself is the customer's tracking capability
       allow list: if isAdmin() || isStaff();
-      // docs/WAVE5_SPEC.md section D — setJobcardStatus() also writes Booking.jobcardStage
-      // here (the customer-safe stage mirror onto the booking the customer already has read
-      // access to) through this SAME admin-only update rule; no rule change was needed to
-      // support it, and none should be made — the mirror exists precisely so the customer
-      // app never needs read access to jobcards. Reads stay `get: true` above, unchanged.
-      allow update, delete: if isAdmin();
+      // docs/WAVE5_SPEC.md section D mirrors — customer-safe denormalizations onto the
+      // booking the customer already has read access to, so the customer app never needs
+      // read access to jobcards or work_items (reads stay `get: true` above, unchanged):
+      //   - Booking.jobcardStage, written by setJobcardStatus() — admin-only, first arm.
+      //   - Booking.customerNotes, appended by addWorkNote() — authored from My Day, which
+      //     is STAFF-only, so staff may update a booking IFF the update touches nothing
+      //     but customerNotes. Never widen that key list: everything else on a booking
+      //     (status, customer, vehicle, jobcardId, jobcardStage) stays admin-only.
+      allow update: if isAdmin() ||
+        (isStaff() && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['customerNotes']));
+      allow delete: if isAdmin();
     }
 
     // jobcards: staff may read (Day Board / My Day context); only admin ever writes — this

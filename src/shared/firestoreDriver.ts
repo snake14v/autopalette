@@ -33,6 +33,7 @@ import {
   arrayUnion,
   serverTimestamp,
   runTransaction,
+  writeBatch,
   deleteField,
   Timestamp,
 } from 'firebase/firestore';
@@ -48,6 +49,7 @@ import {
   assertDeliverySignedOff,
   normalizeJobcardStatus,
   jobcardStageForBookingMirror,
+  toBookingCustomerNote,
   type DataDriver,
   type AuthState,
   type WorkItemInput,
@@ -81,6 +83,10 @@ export function makeFirestoreDriver(): DataDriver {
       otherRequest: data.otherRequest as string | undefined,
       preferredDate: data.preferredDate as string | undefined,
       jobcardId: data.jobcardId as string | undefined,
+      // Section-D mirror fields (customer-safe denormalizations written by the admin/staff
+      // side) — must round-trip through this mapper or the customer app never sees them.
+      jobcardStage: data.jobcardStage as Booking['jobcardStage'],
+      customerNotes: data.customerNotes as Booking['customerNotes'],
     };
   }
 
@@ -536,7 +542,36 @@ export function makeFirestoreDriver(): DataDriver {
     async addWorkNote(id, text, customerVisible) {
       const by = await currentActorId();
       const note: WorkItemNote = { at: Date.now(), by, text, customerVisible };
-      await updateDoc(doc(db, 'work_items', id), { notes: arrayUnion(note) });
+      const wiRef = doc(db, 'work_items', id);
+      if (!customerVisible) {
+        await updateDoc(wiRef, { notes: arrayUnion(note) });
+        return;
+      }
+      // Customer-visible: mirror onto the linked booking (Booking.customerNotes, section-D
+      // pattern — same as jobcardStage) in the SAME batch as the work-item append, so a note
+      // the staff UI confirms as "customer will see it" can never be recorded internally yet
+      // silently missing from the customer timeline. firestore.rules lets staff update ONLY
+      // customerNotes on a booking. Booking resolved via the work item's own bookingId, or
+      // through its jobcard for items created after conversion; no linked booking (walk-in
+      // jobcard / free-text task) -> nothing to mirror, no customer surface.
+      const wiSnap = await getDoc(wiRef);
+      if (!wiSnap.exists()) throw new Error(`Work item ${id} not found`);
+      const wi = wiSnap.data() as WorkItem;
+      let bookingId = wi.bookingId;
+      if (!bookingId && wi.jobcardId) {
+        const jcSnap = await getDoc(doc(db, 'jobcards', wi.jobcardId));
+        bookingId = jcSnap.exists() ? ((jcSnap.data() as Jobcard).bookingId ?? undefined) : undefined;
+      }
+      const batch = writeBatch(db);
+      batch.update(wiRef, { notes: arrayUnion(note) });
+      if (bookingId) {
+        const bookingRef = doc(db, 'bookings', bookingId);
+        const bookingSnap = await getDoc(bookingRef);
+        if (bookingSnap.exists()) {
+          batch.update(bookingRef, { customerNotes: arrayUnion(toBookingCustomerNote(note)) });
+        }
+      }
+      await batch.commit();
     },
 
     // --- Wave 2: customers ------------------------------------------------------------------
@@ -557,38 +592,14 @@ export function makeFirestoreDriver(): DataDriver {
     },
 
     subscribeCustomerNotes(bookingId, cb) {
-      let byBooking: WorkItem[] = [];
-      let byJobcard: WorkItem[] = [];
-
-      function emit() {
-        const merged = new Map<string, WorkItem>();
-        for (const w of [...byBooking, ...byJobcard]) merged.set(w.id, w);
-        const notes = Array.from(merged.values())
-          .flatMap((w) => w.notes.filter((n) => n.customerVisible))
-          .sort((a, b) => a.at - b.at);
-        cb(notes);
-      }
-
-      const unsubByBooking = onSnapshot(query(workItemsCol, where('bookingId', '==', bookingId)), (snap) => {
-        byBooking = snap.docs.map((d) => mapWorkItem(d.id, d.data()));
-        emit();
+      // Reads ONLY the booking doc's customerNotes mirror (get: true — the booking ID is the
+      // customer's tracking capability). The old implementation ran onSnapshot QUERIES on
+      // work_items, which firestore.rules limits to admin/staff — every unauthenticated
+      // customer listener died with permission-denied on live while demo mode worked.
+      return onSnapshot(doc(db, 'bookings', bookingId), (snap) => {
+        const notes = snap.exists() ? ((snap.data().customerNotes as Booking['customerNotes']) ?? []) : [];
+        cb([...notes].sort((a, b) => a.at - b.at));
       });
-
-      let unsubByJobcard: (() => void) | null = null;
-      getDoc(doc(db, 'bookings', bookingId)).then((snap) => {
-        const jobcardId = snap.exists() ? (snap.data().jobcardId as string | undefined) : undefined;
-        if (jobcardId) {
-          unsubByJobcard = onSnapshot(query(workItemsCol, where('jobcardId', '==', jobcardId)), (snap2) => {
-            byJobcard = snap2.docs.map((d) => mapWorkItem(d.id, d.data()));
-            emit();
-          });
-        }
-      });
-
-      return () => {
-        unsubByBooking();
-        unsubByJobcard?.();
-      };
     },
   };
 

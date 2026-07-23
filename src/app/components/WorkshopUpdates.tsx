@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { WorkItemNote, Booking } from '../../shared/types';
+import type { BookingCustomerNote, Booking } from '../../shared/types';
 import { driver } from '../lib/driver';
 import { formatDateTime } from '../lib/format';
 
@@ -47,16 +47,16 @@ function firstSeenAt(bookingId: string, stage: JobcardStage): number {
 }
 
 /**
- * Chronological, admin-curated progress notes for a booking (customerVisible only), plus an
- * auto-generated milestone line derived from `booking.jobcardStage` — a customer-safe field
- * denormalized onto the booking by the admin-side driver whenever the linked job card's
- * lifecycle status changes (docs/WAVE5_SPEC.md section D). This replaces the old getJobcard()
- * read, which silently failed for every real customer under the live Firestore rules
- * (`jobcards/{id}` reads are admin/staff only) — the customer app now reads only the booking
- * it already has access to. Renders nothing when there's nothing to show.
+ * Chronological, staff-curated progress notes for a booking, plus an auto-generated
+ * milestone line derived from `booking.jobcardStage` — BOTH customer-safe fields
+ * denormalized onto the booking doc by the authenticated admin/staff side
+ * (docs/WAVE5_SPEC.md section D): jobcardStage by setJobcardStatus, customerNotes by
+ * addWorkNote. Everything this component shows comes from the one booking doc the
+ * customer already has access to — never from jobcards or work_items, which the live
+ * Firestore rules make admin/staff-only. Renders nothing when there's nothing to show.
  */
 export function WorkshopUpdates({ booking }: { booking: Booking }) {
-  const [notes, setNotes] = useState<WorkItemNote[]>([]);
+  const [notes, setNotes] = useState<BookingCustomerNote[]>([]);
 
   useEffect(() => {
     return driver.subscribeCustomerNotes(booking.id, setNotes);
