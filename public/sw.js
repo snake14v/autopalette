@@ -1,9 +1,14 @@
 // Auto Palette service worker — registered by src/app/main.tsx (customer app) AND
 // src/admin/main.tsx (Wave 2: admin + all 5 employees install /admin/ the same way).
-// Strategy: cache-first for the app shells (/app/, /admin/ + built assets), network-first
-// for everything else (so booking/tracking/job-card data is never served stale when online).
+// Strategy: NETWORK-first for navigations/HTML (falling back to cache when offline),
+// cache-first for hashed immutable assets (/assets/, /icons/).
+//
+// The HTML must never be cache-first: every deploy renames the hashed chunks, so a
+// cached shell pointing at deleted chunk files bricks the app until the cache is
+// purged (this exact failure shipped in v2 and broke /app/ on desktop, 2026-07-23).
+// Hashed assets are safe to cache forever — new HTML always references new names.
 
-const CACHE_NAME = 'autopalette-app-shell-v2';
+const CACHE_NAME = 'autopalette-app-shell-v3';
 const APP_SHELL = [
   '/app/',
   '/admin/',
@@ -29,15 +34,21 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-function isAppShellRequest(url) {
+/** Immutable-by-name files only — NEVER the HTML shells (see header comment). */
+function isImmutableAsset(url) {
   return (
-    url.pathname.startsWith('/app/') ||
-    url.pathname.startsWith('/admin/') ||
     url.pathname.startsWith('/assets/') ||
     url.pathname.startsWith('/icons/') ||
     url.pathname === '/manifest.webmanifest' ||
     url.pathname === '/manifest-admin.webmanifest'
   );
+}
+
+/** Cached shell to serve when a navigation fails offline. */
+function offlineShellFor(url) {
+  if (url.pathname.startsWith('/admin')) return '/admin/';
+  if (url.pathname.startsWith('/app')) return '/app/';
+  return null;
 }
 
 self.addEventListener('fetch', (event) => {
@@ -47,8 +58,29 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return; // never intercept cross-origin (Firestore, fonts, etc.)
 
-  if (isAppShellRequest(url)) {
-    // Cache-first: fast repeat loads of the shell, fall back to network then cache the result.
+  if (request.mode === 'navigate') {
+    // Network-first for every page load: online users always get the CURRENT shell
+    // (whose hashed asset names always exist on the CDN); offline falls back to cache.
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => {
+            if (cached) return cached;
+            const shell = offlineShellFor(url);
+            return shell ? caches.match(shell) : Response.error();
+          })
+        )
+    );
+    return;
+  }
+
+  if (isImmutableAsset(url)) {
+    // Cache-first: hashed filenames change on every deploy, so a cache hit is always correct.
     event.respondWith(
       caches.match(request).then(
         (cached) =>
