@@ -1509,7 +1509,13 @@ select.form-control {
 .brands-track {
   display: flex;
   align-items: center;
-  gap: 5rem;
+  /* No `gap` here on purpose: with 12 items (two identical 6-item copies) a flex
+     `gap` sits BETWEEN items, so translateX(-50%) — half of (2×copy + 1 seam gap)
+     — lands half a gap short of one true copy-width every cycle. That shows up as
+     a visible jump/uneven-spacing snap each time the loop restarts. Moving the
+     spacing onto each item as a trailing margin makes it part of that item's own
+     box, so each copy's total width is identical and -50% is EXACTLY one copy —
+     a mathematically seamless loop regardless of how wide each brand name is. */
   width: max-content;
   animation: brandsScroll 30s linear infinite;
 }
@@ -1521,6 +1527,7 @@ select.form-control {
   color: var(--gray-dark);
   letter-spacing: 3px;
   white-space: nowrap;
+  margin-right: 2.5rem;
   transition: filter 0.3s, opacity 0.3s;
   cursor: default;
   opacity: 0.92;
@@ -1639,8 +1646,8 @@ select.form-control {
   .option-grid { grid-template-columns: 1fr 1fr; }
   .price-output #estimated-price { font-size: 3rem; }
   .estimator-display { padding: 2rem 1.5rem; }
-  /* Per-brand letter-spacing (brand--* classes) must survive on mobile — size only here. */
-  .brand-item { font-size: 0.9rem; }
+  /* Per-brand letter-spacing (brand--* classes) must survive on mobile — size/margin only here. */
+  .brand-item { font-size: 0.9rem; margin-right: 1.5rem; }
 }
 
 /* ============================================================
