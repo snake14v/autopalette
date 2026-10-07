@@ -1,264 +1,330 @@
-/* ============================================================
-   AUTO PALETTE — Main JavaScript
-   Scroll reveal + navbar + counters + FAQ + price estimator
-   ============================================================ */
+document.documentElement.classList.add("js");
 
-document.addEventListener('DOMContentLoaded', () => {
-  initScrollReveal();
-  initNavbar();
-  initCounterAnimation();
-  initFaq();
-  initPriceEstimator();
-  initMagneticButtons();
-  initHeroVideo();
-  document.querySelector('.hero')?.classList.add('loaded');
-});
+const WA = "918884471117";
 
-// ---- HERO VIDEO (desktop-only, motion-ok, non-data-saver) ----
-// The <video> ships with no source so mobile/reduced-motion/save-data visitors
-// never download a byte; the gate here attaches it only when appropriate.
-function initHeroVideo() {
-  const video = document.querySelector('.hero-video');
-  if (!video) return;
-  const wantsVideo =
-    window.matchMedia('(min-width: 768px)').matches &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
-    !(navigator.connection && navigator.connection.saveData);
-  if (!wantsVideo) return;
-  // Attach after window load so the video never competes with critical assets.
-  const attach = () => {
-    video.src = '/hero-loop.mp4';
-    video.addEventListener('playing', () => video.classList.add('playing'), { once: true });
-    video.play().catch(() => { /* autoplay blocked -> poster/illustration stays, no error */ });
-  };
-  if (document.readyState === 'complete') attach();
-  else window.addEventListener('load', attach, { once: true });
+function waUrl(text) {
+  return "https://wa.me/" + WA + "?text=" + encodeURIComponent(text);
 }
 
-// ---- SCROLL REVEAL ENGINE ----
-function initScrollReveal() {
-  if (initScrollReveal.__init) return;          // idempotent — safe to call more than once
-  initScrollReveal.__init = true;
+function sizeHeader() {
+  const header = document.querySelector(".site-header");
+  if (header) document.documentElement.style.setProperty("--header-h", header.offsetHeight + "px");
+}
 
-  const revealElements = Array.from(
-    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale')
-  );
-  if (!revealElements.length) return;
+function initMenu() {
+  const btn = document.getElementById("nav-toggle");
+  const nav = document.getElementById("nav-links");
+  sizeHeader();
+  window.addEventListener("resize", sizeHeader);
+  if (!btn || !nav) return;
+  const setOpen = (open) => {
+    nav.classList.toggle("open", open);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+    document.body.style.overflow = open ? "hidden" : "";
+  };
+  btn.addEventListener("click", () => setOpen(!nav.classList.contains("open")));
+  nav.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setOpen(false)));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setOpen(false);
+  });
+}
 
-  const activate = (el) => el.classList.add('active');
-
-  // Respect reduced-motion: show everything immediately, no animation dependency.
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    revealElements.forEach(activate);
+function initReveal() {
+  const nodes = document.querySelectorAll(".reveal");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || !("IntersectionObserver" in window)) {
+    nodes.forEach((n) => n.classList.add("in"));
     return;
   }
-
-  const observer = new IntersectionObserver((entries) => {
+  const io = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        activate(entry.target);
-        observer.unobserve(entry.target);
+        entry.target.classList.add("in");
+        io.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-
-  revealElements.forEach((el) => observer.observe(el));
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+  nodes.forEach((n) => io.observe(n));
 }
 
-// ---- NAVBAR SCROLL EFFECT ----
-function initNavbar() {
-  const navbar = document.querySelector('.navbar');
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 100) {
-      navbar?.classList.add('scrolled');
-    } else {
-      navbar?.classList.remove('scrolled');
-    }
-  }, { passive: true });
-}
-
-// ---- ANIMATED COUNTERS ----
-function initCounterAnimation() {
-  const counters = document.querySelectorAll('[data-count]');
-
-  const counterObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const target = parseInt(entry.target.dataset.count);
-        const suffix = entry.target.dataset.suffix || '';
-        animateCounter(entry.target, 0, target, 2000, suffix);
-        counterObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.5 });
-
-  counters.forEach(counter => counterObserver.observe(counter));
-}
-
-function animateCounter(el, start, end, duration, suffix) {
-  const range = end - start;
-  const startTime = performance.now();
-
-  function update(currentTime) {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    // Ease out quad
-    const eased = 1 - (1 - progress) * (1 - progress);
-    const current = Math.floor(start + range * eased);
-    el.textContent = current + suffix;
-
-    if (progress < 1) {
-      requestAnimationFrame(update);
-    }
-  }
-
-  requestAnimationFrame(update);
-}
-
-// ---- SMOOTH SCROLL ANCHORS ----
-document.addEventListener('click', (e) => {
-  const anchor = e.target.closest('a[href^="#"]');
-  if (anchor) {
-    e.preventDefault();
-    const target = document.querySelector(anchor.getAttribute('href'));
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
-});
-
-// ---- CONTACT FORM HANDLER ----
-// NOTE: the real enquiry submit handler lives in index.html and opens WhatsApp with
-// the customer's details. A second "fake success" handler used to live here and
-// showed "✓ REQUEST RECEIVED" WITHOUT sending anything — it was deleted because it
-// silently lost leads (e.g. when the WhatsApp popup was blocked). Do not re-add it.
-
-// ---- MOBILE MENU ----
-document.addEventListener('click', (e) => {
-  if (e.target.closest('.hamburger')) {
-    document.querySelector('.nav-links')?.classList.toggle('open');
-  }
-});
-
-// ---- HOVER TILT ON SERVICE CARDS ----
-document.addEventListener('mousemove', (e) => {
-  const card = e.target.closest('.service-card');
-  if (!card) return;
-
-  const rect = card.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  const centerX = rect.width / 2;
-  const centerY = rect.height / 2;
-  const tiltX = (y - centerY) / centerY * 3;
-  const tiltY = (centerX - x) / centerX * 3;
-
-  card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-8px)`;
-});
-
-document.addEventListener('mouseleave', (e) => {
-  // On a document-level mouseleave e.target can be `document` (no .closest) — guard it.
-  const t = e.target;
-  if (t instanceof Element) {
-    const card = t.closest('.service-card');
-    if (card) card.style.transform = '';
-  }
-}, true);
-
-// ---- FAQ ACCORDION ----
 function initFaq() {
-  const faqItems = document.querySelectorAll('.faq-item');
-  faqItems.forEach(item => {
-    const btn = item.querySelector('.faq-btn');
-    const content = item.querySelector('.faq-content');
-    btn.addEventListener('click', () => {
-      const isActive = item.classList.contains('active');
-      faqItems.forEach(i => {
-        i.classList.remove('active');
-        i.querySelector('.faq-content').style.maxHeight = null;
+  const items = document.querySelectorAll(".faq-item");
+  items.forEach((item) => {
+    const btn = item.querySelector("button");
+    const panel = item.querySelector(".faq-panel");
+    btn.addEventListener("click", () => {
+      const open = btn.getAttribute("aria-expanded") === "true";
+      items.forEach((other) => {
+        other.querySelector("button").setAttribute("aria-expanded", "false");
+        other.querySelector(".faq-panel").hidden = true;
       });
-      if (!isActive) {
-        item.classList.add('active');
-        content.style.maxHeight = content.scrollHeight + 'px';
+      if (!open) {
+        btn.setAttribute("aria-expanded", "true");
+        panel.hidden = false;
       }
     });
   });
 }
 
-// ---- PRICE ESTIMATOR ----
-// Static price table — values unchanged from the pre-rebuild version; only the
-// output copy/framing and the primary CTA destination changed (see index.html).
-function initPriceEstimator() {
+function initEstimator() {
   const prices = {
-    hatchback: { ppf: '35,000', ceramic: '8,000', detailing: '3,500' },
-    sedan:     { ppf: '45,000', ceramic: '12,000', detailing: '5,000' },
-    suv:       { ppf: '65,000', ceramic: '18,000', detailing: '7,500' }
+    hatchback: { ppf: "35,000", ceramic: "8,000", detailing: "3,500" },
+    sedan: { ppf: "45,000", ceramic: "12,000", detailing: "5,000" },
+    suv: { ppf: "65,000", ceramic: "18,000", detailing: "7,500" },
   };
-  const durations = {
-    ppf: '3-5 Days', ceramic: '1-2 Days', detailing: '1 Day'
+  const durations = { ppf: "3–5 days", ceramic: "1–2 days", detailing: "1 day" };
+  const labels = {
+    hatchback: "Hatchback",
+    sedan: "Sedan",
+    suv: "SUV / luxury",
+    ppf: "PPF",
+    ceramic: "Ceramic coating",
+    detailing: "Detailing",
   };
+  let vehicle = "hatchback";
+  let service = "ppf";
+  const priceEl = document.getElementById("estimated-price");
+  const durEl = document.getElementById("quote-duration");
 
-  let selectedVehicle = 'hatchback';
-  let selectedService = 'ppf';
-
-  function updateQuote() {
-    const priceEl = document.getElementById('estimated-price');
-    const durEl = document.getElementById('quote-duration');
-    if (priceEl) priceEl.textContent = prices[selectedVehicle][selectedService];
-    if (durEl) durEl.textContent = durations[selectedService];
+  function paint() {
+    if (priceEl) priceEl.textContent = prices[vehicle][service];
+    if (durEl) durEl.textContent = durations[service];
   }
 
-  document.querySelectorAll('#vehicle-type .option-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#vehicle-type .option-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedVehicle = btn.dataset.value;
-      updateQuote();
+  function bind(group, key) {
+    group.querySelectorAll(".opt").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        group.querySelectorAll(".opt").forEach((b) => {
+          b.classList.remove("is-on");
+          b.setAttribute("aria-pressed", "false");
+        });
+        btn.classList.add("is-on");
+        btn.setAttribute("aria-pressed", "true");
+        if (key === "vehicle") vehicle = btn.dataset.value;
+        else service = btn.dataset.value;
+        paint();
+      });
     });
-  });
+  }
 
-  document.querySelectorAll('#service-type .option-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('#service-type .option-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedService = btn.dataset.value;
-      updateQuote();
+  const vGroup = document.getElementById("vehicle-type");
+  const sGroup = document.getElementById("service-type");
+  if (!vGroup || !sGroup) return;
+  bind(vGroup, "vehicle");
+  bind(sGroup, "service");
+  paint();
+
+  const wa = document.getElementById("quote-wa");
+  if (wa) {
+    wa.addEventListener("click", () => {
+      const msg =
+        "Auto Palette — quote request\n\n" +
+        "Vehicle type: " + labels[vehicle] + "\n" +
+        "Service: " + labels[service] + "\n" +
+        "Typical starting price: ₹" + prices[vehicle][service] + "\n" +
+        "Duration: " + durations[service] + "\n\n" +
+        "I'd like to confirm this on inspection and book a slot.";
+      window.open(waUrl(msg), "_blank", "noopener");
     });
-  });
+  }
+}
 
-  // Expose sendQuoteWa globally — secondary WhatsApp path from the estimator
-  // (primary path is the "CONTINUE TO BOOKING" link to /app/#/book in index.html).
-  window.sendQuoteWa = function() {
-    const price = prices[selectedVehicle][selectedService];
-    const svc = selectedService.toUpperCase();
-    const veh = selectedVehicle.charAt(0).toUpperCase() + selectedVehicle.slice(1);
-    const msg = encodeURIComponent(
-      `🛡️ *Auto Palette — Quote Request*\n\n` +
-      `*Vehicle Type:* ${veh}\n` +
-      `*Service:* ${svc}\n` +
-      `*Typical Starting Price:* ₹${price}\n` +
-      `*Duration:* ${durations[selectedService]}\n\n` +
-      `I'd like to confirm this on inspection and book a slot.`
-    );
-    window.open('https://wa.me/918884471117?text=' + msg, '_blank');
+function initForm() {
+  const form = document.getElementById("enquiry-form");
+  if (!form) return;
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const data = new FormData(form);
+    const msg =
+      "New enquiry — Auto Palette website\n\n" +
+      "Name: " + data.get("name") + "\n" +
+      "Phone: " + data.get("phone") + "\n" +
+      "Service: " + data.get("service") + "\n" +
+      "Vehicle: " + (data.get("vehicle") || "Not specified") + "\n" +
+      "Notes: " + (data.get("notes") || "None");
+    window.open(waUrl(msg), "_blank", "noopener");
+  });
+}
+
+function initPixelCar() {
+  const canvas = document.getElementById("pixel-car");
+  const track = canvas && canvas.parentElement;
+  if (!canvas || !track) return;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const rows = [
+    "000000000011111111000000000000",
+    "000000001113333333110000000000",
+    "000000011333333333331100000000",
+    "000001112222222222222114400000",
+    "000112222222222222222222114000",
+    "001222222222222222222222221400",
+    "012222222222222222222222222250",
+    "122226666111111666662222222250",
+    "001166776611116677661100000000",
+    "000116776600000677661100000000",
+    "000011666100000166661000000000",
+  ];
+  const dirty = [
+    [4, 8], [5, 14], [5, 20], [6, 6], [6, 16], [6, 24], [7, 10], [7, 18],
+  ];
+  const base = {
+    1: [12, 12, 14],
+    2: [236, 244, 250],
+    3: [36, 86, 130],
+    4: [255, 230, 90],
+    5: [255, 50, 86],
+    6: [16, 16, 18],
+    7: [186, 192, 200],
   };
+  const dusty = [150, 136, 118];
+  const cleanBody = [236, 244, 250];
+  const mud = [92, 72, 52];
+  const sw = rows[0].length;
+  const sh = rows.length;
+  let cssW = 0;
+  let scale = 3;
+  let dpr = 1;
+  let x = -80;
+  let last = 0;
+  let raf = 0;
+  const bubbles = [];
+  const sparkles = [];
 
-  updateQuote();
-}
+  function resize() {
+    cssW = track.clientWidth;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    scale = cssW < 520 ? 2 : 3;
+    canvas.width = Math.max(1, Math.floor(cssW * dpr));
+    canvas.height = Math.floor(112 * dpr);
+  }
 
-// ---- MAGNETIC BUTTONS ----
-function initMagneticButtons() {
-  const btns = document.querySelectorAll('.btn-primary, .btn-secondary, .nav-cta');
-  btns.forEach(btn => {
-    btn.addEventListener('mousemove', (e) => {
-      const rect = btn.getBoundingClientRect();
-      const x = (e.clientX - rect.left - rect.width/2) * 0.25;
-      const y = (e.clientY - rect.top - rect.height/2) * 0.25;
-      btn.style.transform = `translate(${x}px, ${y}px)`;
+  function mix(a, b, t) {
+    return a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  }
+
+  function fill(ctx, col, px, py, s) {
+    ctx.fillStyle = "rgb(" + col[0] + "," + col[1] + "," + col[2] + ")";
+    ctx.fillRect(px, py, s, s);
+  }
+
+  function drawCar(ctx, left, top, s, cleanT) {
+    const body = mix(dusty, cleanBody, cleanT);
+    for (let y = 0; y < sh; y++) {
+      for (let x0 = 0; x0 < sw; x0++) {
+        const ch = rows[y][x0];
+        if (ch === "0") continue;
+        let col = base[ch];
+        if (ch === "2") col = body;
+        if (ch === "3" && cleanT < 1) col = mix([70, 78, 86], base[3], cleanT);
+        fill(ctx, col, left + x0 * s, top + y * s, s);
+      }
+    }
+    if (cleanT < 0.72) {
+      dirty.forEach(([y, x0]) => {
+        if (rows[y] && rows[y][x0] === "2") fill(ctx, mud, left + x0 * s, top + y * s, s);
+      });
+    }
+  }
+
+  function spawn(list, px, py, kind) {
+    list.push({
+      x: px + Math.random() * 24 - 8,
+      y: py,
+      vy: kind === "b" ? -(18 + Math.random() * 28) : -(10 + Math.random() * 16),
+      life: 1,
+      kind,
     });
-    btn.addEventListener('mouseleave', () => {
-      btn.style.transform = '';
-      btn.style.transition = 'transform 0.4s var(--ease-spring)';
+  }
+
+  function drawFx(ctx, list, s) {
+    for (let i = list.length - 1; i >= 0; i--) {
+      const p = list[i];
+      p.y += p.vy * 0.016;
+      p.life -= 0.012;
+      if (p.life <= 0) { list.splice(i, 1); continue; }
+      const col = p.kind === "b" ? [142, 230, 255] : [243, 239, 106];
+      const px = Math.round(p.x);
+      const py = Math.round(p.y);
+      fill(ctx, col, px, py, s);
+      if (p.kind === "s") {
+        fill(ctx, col, px - s, py, s);
+        fill(ctx, col, px + s, py, s);
+        fill(ctx, col, px, py - s, s);
+        fill(ctx, col, px, py + s, s);
+      } else {
+        fill(ctx, [255, 255, 255], px + s, py - s, s);
+      }
+    }
+  }
+
+  function frame(now) {
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const s = scale * dpr;
+    const ground = Math.floor(86 * dpr);
+    ctx.fillStyle = "#1c1c22";
+    ctx.fillRect(0, ground, canvas.width, Math.max(4, 3 * dpr));
+    const dt = Math.min(0.04, (now - last) / 1000 || 0.016);
+    last = now;
+    const speed = cssW < 520 ? 70 : 110;
+    if (!reduce) x += speed * dt;
+    const carPx = sw * scale;
+    if (x > cssW + 20) {
+      x = -carPx - 10;
+      bubbles.length = 0;
+      sparkles.length = 0;
+    }
+    const center = (x + carPx / 2) / cssW;
+    let cleanT = 0;
+    if (center < 0.22) cleanT = 0;
+    else if (center < 0.58) cleanT = (center - 0.22) / 0.36;
+    else cleanT = 1;
+    const top = Math.floor(28 * dpr);
+    const left = Math.floor(x * dpr);
+    if (!reduce && center > 0.18 && center < 0.5 && bubbles.length < 28 && Math.random() < 0.7) {
+      spawn(bubbles, left + carPx * dpr * 0.45, top + 4 * s, "b");
+    }
+    if (!reduce && center > 0.55 && center < 0.86 && sparkles.length < 20 && Math.random() < 0.55) {
+      spawn(sparkles, left + carPx * dpr * 0.7, top, "s");
+    }
+    drawFx(ctx, bubbles, Math.max(2, s / 2));
+    drawCar(ctx, left, top, s, cleanT);
+    drawFx(ctx, sparkles, Math.max(2, s / 2));
+    if (!reduce) raf = requestAnimationFrame(frame);
+  }
+
+  resize();
+  if (reduce) {
+    x = Math.max(16, cssW * 0.5 - (sw * scale) / 2);
+    frame(0);
+  } else {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          last = performance.now();
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(frame);
+        } else {
+          cancelAnimationFrame(raf);
+        }
+      });
     });
+    io.observe(track);
+  }
+  window.addEventListener("resize", () => {
+    resize();
+    if (reduce) {
+      x = Math.max(16, cssW * 0.5 - (sw * scale) / 2);
+      frame(0);
+    }
   });
 }
+
+initMenu();
+initReveal();
+initFaq();
+initEstimator();
+initForm();
+initPixelCar();
