@@ -153,21 +153,21 @@ function initPixelCar() {
   if (!canvas || !track) return;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const rows = [
-    "000000000011111111000000000000",
-    "000000001113333333110000000000",
-    "000000011333333333331100000000",
-    "000001112222222222222114400000",
-    "000112222222222222222222114000",
-    "001222222222222222222222221400",
-    "012222222222222222222222222250",
-    "122226666111111666662222222250",
-    "001166776611116677661100000000",
-    "000116776600000677661100000000",
-    "000011666100000166661000000000",
+    "....................1111111111................",
+    ".................111333333333311..............",
+    "...............1133333333333333311............",
+    ".............11333333333333333333311..........",
+    "...........11222222222222222222222221144......",
+    ".........112222222222222222222222222221144....",
+    ".......1122222222222222222222222222222221144..",
+    ".....112222222222222222222222222222222222255..",
+    "...11222222222222222222222222222222222222255..",
+    "..112222222666661111111666662222222222222255..",
+    "..11222222677776111111677776222222222222255...",
+    "....1111116677761111116677761111111111111.....",
+    "........11666661111111666661..................",
   ];
-  const dirty = [
-    [4, 8], [5, 14], [5, 20], [6, 6], [6, 16], [6, 24], [7, 10], [7, 18],
-  ];
+  const dirty = [[6, 18], [7, 24], [8, 14], [8, 30]];
   const base = {
     1: [12, 12, 14],
     2: [236, 244, 250],
@@ -194,9 +194,9 @@ function initPixelCar() {
   function resize() {
     cssW = track.clientWidth;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-    scale = cssW < 520 ? 2 : 3;
+    scale = cssW < 520 ? 3 : 4;
     canvas.width = Math.max(1, Math.floor(cssW * dpr));
-    canvas.height = Math.floor(112 * dpr);
+    canvas.height = Math.floor(108 * dpr);
   }
 
   function mix(a, b, t) {
@@ -213,10 +213,9 @@ function initPixelCar() {
     for (let y = 0; y < sh; y++) {
       for (let x0 = 0; x0 < sw; x0++) {
         const ch = rows[y][x0];
-        if (ch === "0") continue;
+        if (ch === "." || ch === "0") continue;
         let col = base[ch];
         if (ch === "2") col = body;
-        if (ch === "3" && cleanT < 1) col = mix([70, 78, 86], base[3], cleanT);
         fill(ctx, col, left + x0 * s, top + y * s, s);
       }
     }
@@ -263,7 +262,7 @@ function initPixelCar() {
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const s = scale * dpr;
-    const ground = Math.floor(86 * dpr);
+    const ground = Math.floor(96 * dpr);
     ctx.fillStyle = "#1c1c22";
     ctx.fillRect(0, ground, canvas.width, Math.max(4, 3 * dpr));
     const dt = Math.min(0.04, (now - last) / 1000 || 0.016);
@@ -281,7 +280,7 @@ function initPixelCar() {
     if (center < 0.22) cleanT = 0;
     else if (center < 0.58) cleanT = (center - 0.22) / 0.36;
     else cleanT = 1;
-    const top = Math.floor(28 * dpr);
+    const top = Math.floor((96 - sh * scale) * dpr);
     const left = Math.floor(x * dpr);
     if (!reduce && center > 0.18 && center < 0.5 && bubbles.length < 28 && Math.random() < 0.7) {
       spawn(bubbles, left + carPx * dpr * 0.45, top + 4 * s, "b");
